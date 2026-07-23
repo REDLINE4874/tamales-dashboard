@@ -213,3 +213,5 @@ input, select{ font-family:'Inter',sans-serif; }
 .utilidad-pill.pos{ color:var(--hoja); background:rgba(31,58,46,.1); }
 .utilidad-pill.neg{ color:var(--chile); background:rgba(178,58,46,.1); }
 .utilidad-pill.pending{ color:var(--carbon-60); background:rgba(43,33,24,.06); }
+
+
