@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: tamales-dashboard
+    runtime: static
+    rootDir: web
+    buildCommand: ""
+    staticPublishPath: .
