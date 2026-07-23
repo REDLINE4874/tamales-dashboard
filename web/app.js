@@ -125,17 +125,39 @@ function addItemRow() {
   const list = document.getElementById('itemsList');
   const row = document.createElement('div');
   row.className = 'item-row';
+  
+  // Se agregó el contenedor .cant-control con los botones + y -
   row.innerHTML = `
     <div class="item-row-main">
       <select class="item-tipo">${optionsHTML()}</select>
-      <input type="number" class="item-cant" min="1" value="1" placeholder="Cant.">
+      <div class="cant-control">
+        <button type="button" class="btn-minus">−</button>
+        <input type="number" class="item-cant" min="1" value="1" placeholder="Cant.">
+        <button type="button" class="btn-plus">+</button>
+      </div>
       <button type="button" class="remove-item">✕</button>
     </div>
     <div class="item-hint"></div>
   `;
+  
+  // Eventos de eliminación y validación nativa
   row.querySelector('.remove-item').addEventListener('click', () => { row.remove(); refreshFormState(); });
-  row.querySelector('.item-cant').addEventListener('input', refreshFormState);
+  const input = row.querySelector('.item-cant');
+  input.addEventListener('input', refreshFormState);
   row.querySelector('.item-tipo').addEventListener('change', refreshFormState);
+
+  // Lógica de los botones + y -
+  row.querySelector('.btn-minus').addEventListener('click', () => {
+    // Evita que baje de 1
+    input.value = Math.max(1, Number(input.value) - 1);
+    refreshFormState();
+  });
+  
+  row.querySelector('.btn-plus').addEventListener('click', () => {
+    input.value = Number(input.value) + 1;
+    refreshFormState();
+  });
+
   list.appendChild(row);
   refreshFormState();
 }

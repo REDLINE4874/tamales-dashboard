@@ -158,14 +158,72 @@ input, select{ font-family:'Inter',sans-serif; }
 .modal-actions{ display:flex; gap:8px; }
 .modal-actions button{ flex:1; padding:10px; border-radius:8px; font-size:13px; font-weight:600; }
 
-@media (max-width: 720px){
-  .app{ flex-direction:column; }
-  .sidebar{ width:auto; flex-direction:row; align-items:center; padding:14px 16px; flex-wrap:wrap; }
-  .brand{ padding:0; margin-right:auto; }
-  .nav{ flex-direction:row; }
-  .sidebar-foot{ display:none; }
-  .content{ padding:22px 18px; }
-  .stats-row{ grid-template-columns:1fr; }
+/* ---------- MEJORAS RESPONSIVAS (MÓVILES / TABLETS) ---------- */
+@media (max-width: 720px) {
+  .app { flex-direction: column; }
+  
+  .sidebar { 
+    width: auto; 
+    flex-direction: row; 
+    align-items: center; 
+    padding: 14px 16px; 
+    flex-wrap: wrap; 
+  }
+  
+  .brand { padding: 0; margin-right: auto; }
+  .sidebar-foot { display: none; }
+  
+  /* Hacer la navegación deslizable lateralmente (scroll) */
+  .nav { 
+    flex-direction: row; 
+    width: 100%; 
+    overflow-x: auto; 
+    white-space: nowrap;
+    padding-bottom: 8px; 
+    margin-top: 12px;
+    gap: 8px;
+  }
+  
+  .nav-item {
+    text-align: center;
+    min-height: 44px; /* Área táctil recomendada */
+    flex-shrink: 0;
+  }
+  
+  .content { padding: 16px; }
+  .stats-row { grid-template-columns: 1fr; }
+  
+  /* Tickets en 1 sola columna para mejor lectura */
+  .tickets-grid { 
+    grid-template-columns: 1fr; 
+  }
+  
+  /* Formulario: El selector toma toda la fila superior, los botones abajo */
+  .item-row-main { 
+    flex-wrap: wrap; 
+  }
+  
+  .item-row select { 
+    flex: 1 1 100%; /* Fuerza al selector a ocupar el 100% en móviles */
+    margin-bottom: 8px;
+    min-height: 44px;
+  }
+  
+  .remove-item {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Inventario adaptable */
+  .inv-row-main {
+    flex-wrap: wrap;
+  }
+  .inv-input {
+    flex: 1 1 100%;
+    min-height: 44px;
+  }
+  
+  .modal { width: 90%; max-width: 320px; }
 }
 
 /* ---------- FORM: filas con aviso de inventario ---------- */
@@ -213,5 +271,46 @@ input, select{ font-family:'Inter',sans-serif; }
 .utilidad-pill.pos{ color:var(--hoja); background:rgba(31,58,46,.1); }
 .utilidad-pill.neg{ color:var(--chile); background:rgba(178,58,46,.1); }
 .utilidad-pill.pending{ color:var(--carbon-60); background:rgba(43,33,24,.06); }
+/* ---------- CONTROLES DE CANTIDAD (+ / -) ---------- */
+.cant-control {
+  display: flex;
+  align-items: center;
+  background: var(--masa);
+  border: 1px solid var(--linea);
+  border-radius: 8px;
+  overflow: hidden;
+}
 
+.cant-control button {
+  background: transparent;
+  color: var(--hoja);
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  min-width: 44px; /* Área táctil amigable para móviles */
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
 
+.cant-control button:active { 
+  background: rgba(43,33,24,0.1); 
+}
+
+.cant-control input {
+  width: 40px !important;
+  text-align: center;
+  border: none !important; /* Quita los bordes para que luzca integrado */
+  border-radius: 0 !important;
+  padding: 10px 0 !important;
+  -moz-appearance: textfield;
+}
+
+/* Ocultar las flechas nativas del input numérico */
+.cant-control input::-webkit-outer-spin-button,
+.cant-control input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
