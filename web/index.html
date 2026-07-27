@@ -31,23 +31,63 @@
 
     <main class="content">
       <!-- NUEVO PEDIDO -->
+      <!-- NUEVO PEDIDO -->
       <section id="view-nuevo" class="view active">
         <header class="view-head">
-          <h1>Nueva comanda</h1>
-          <p>Registra el pedido de un cliente</p>
-        </header>
-        <div class="card form-card">
-          <label>Cliente
-            <input type="text" id="clienteInput" placeholder="Nombre del cliente">
-          </label>
-          <div id="itemsList" class="items-list"></div>
-          <button type="button" class="btn-ghost" id="addItemBtn">+ Agregar tipo de tamal</button>
-          <div class="total-row">
-            <span>Total estimado</span>
-            <span class="mono total-amount" id="totalEstimado">$0</span>
+          <div class="head-title-row">
+            <h1>Nueva comanda</h1>
+            <span class="head-badge">Punto de Venta</span>
           </div>
-          <div id="pedidoWarning" class="form-warning" hidden></div>
-          <button class="btn-primary" id="crearPedidoBtn">Crear comanda</button>
+          <p>Registra el pedido del cliente y descuenta automáticamente del inventario</p>
+        </header>
+
+        <div class="form-container">
+          <div class="card form-card">
+            
+            <!-- 1. Sección Cliente -->
+            <div class="form-group">
+              <label for="clienteInput" class="form-group-title">
+                <span class="group-icon">👤</span> Nombre del cliente
+              </label>
+              <div class="input-wrapper">
+                <input type="text" id="clienteInput" placeholder="Nombre" autocomplete="off">
+              </div>
+            </div>
+
+            <!-- 2. Sección Detalle del Pedido -->
+            <div class="form-group">
+              <div class="form-group-header">
+                <span class="form-group-title"><span class="group-icon">🫔</span> Tamales solicitados</span>
+                <span class="form-group-sub">Selecciona tipo y cantidad</span>
+              </div>
+              
+              <div id="itemsList" class="items-list"></div>
+
+              <button type="button" class="btn-add-item" id="addItemBtn">
+                <span class="add-icon">+</span> Agregar otro tamal
+              </button>
+            </div>
+
+            <!-- 3. Ticket / Resumen de Compra -->
+            <div class="order-summary-card">
+              <div class="summary-top">
+                <span>Resumen del pedido</span>
+                <span class="summary-status-tag">Cobro estimado</span>
+              </div>
+              <div class="total-row">
+                <span class="total-label">Total a cobrar</span>
+                <span class="mono total-amount" id="totalEstimado">$0</span>
+              </div>
+              <div id="pedidoWarning" class="form-warning" hidden></div>
+            </div>
+
+            <!-- 4. Botón de Acción -->
+            <button class="btn-primary btn-submit-order" id="crearPedidoBtn">
+              <span>Crear comanda</span>
+              <span class="btn-arrow">→</span>
+            </button>
+
+          </div>
         </div>
       </section>
 

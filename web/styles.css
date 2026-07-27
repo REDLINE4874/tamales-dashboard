@@ -158,82 +158,86 @@ input, select{ font-family:'Inter',sans-serif; }
 .modal-actions{ display:flex; gap:8px; }
 .modal-actions button{ flex:1; padding:10px; border-radius:8px; font-size:13px; font-weight:600; }
 
-/* ---------- MEJORAS RESPONSIVAS (MÓVILES / TABLETS) ---------- */
+/* ==========================================================
+   MEJORAS RESPONSIVAS (MÓVILES: < 720px)
+   ========================================================== */
 @media (max-width: 720px) {
   .app { flex-direction: column; }
   
   .sidebar { 
-    width: auto; 
-    flex-direction: row; 
-    align-items: center; 
-    padding: 14px 16px; 
-    flex-wrap: wrap; 
+    width: 100%; 
+    flex-direction: column; 
+    padding: 16px 16px 8px; 
   }
   
-  .brand { padding: 0; margin-right: auto; }
-  .sidebar-foot { display: none; }
+  .brand { margin-bottom: 12px; width: 100%; text-align: center; justify-content: center; }
+  /* ==========================================================
+     ESTADO DE CONEXIÓN EN MÓVILES
+     ========================================================== */
+  .sidebar-foot { 
+    display: flex; 
+    flex-direction: row; 
+    justify-content: space-between; 
+    align-items: center; 
+    width: 100%; 
+    padding-top: 8px; 
+    margin-top: 4px;
+    border-top: 1px dashed rgba(243,233,199,.2); 
+  }
   
-  /* Hacer la navegación deslizable lateralmente (scroll) */
+  /* Ajustamos los elementos internos para que queden en una sola línea */
+  .week-chip { 
+    border-top: none; 
+    padding-top: 0; 
+  }
+  
+  .conn-status { 
+    margin-top: 0; 
+    font-weight: 600; /* Un poco más de grosor para que se lea mejor en pantallas pequeñas */
+  }
+  
+  /* Navegación deslizable lateralmente sin barra visible */
   .nav { 
     flex-direction: row; 
     width: 100%; 
     overflow-x: auto; 
     white-space: nowrap;
     padding-bottom: 8px; 
-    margin-top: 12px;
     gap: 8px;
+    scrollbar-width: none; /* Firefox */
   }
+  .nav::-webkit-scrollbar { display: none; /* Chrome/Safari */ }
   
-  .nav-item {
-    text-align: center;
-    min-height: 44px; /* Área táctil recomendada */
-    flex-shrink: 0;
-  }
+  .nav-item { flex: 0 0 auto; text-align: center; min-height: 44px; }
   
   .content { padding: 16px; }
-  .stats-row { grid-template-columns: 1fr; }
+  .stats-row { display: flex; flex-direction: column; gap: 12px; }
   
-  /* Tickets en 1 sola columna para mejor lectura */
-  .tickets-grid { 
-    grid-template-columns: 1fr; 
+  .tickets-grid { grid-template-columns: 1fr; }
+  
+  /* OPTIMIZACIÓN: Quitar rotaciones e intensas sombras para ahorrar CPU */
+  .ticket {
+    transform: none !important; 
+    box-shadow: 0 2px 8px rgba(43,33,24,.08);
   }
   
-  /* Formulario: El selector toma toda la fila superior, los botones abajo */
-  .item-row-main { 
-    flex-wrap: wrap; 
-  }
-  
-  .item-row select { 
-    flex: 1 1 100%; /* Fuerza al selector a ocupar el 100% en móviles */
-    margin-bottom: 8px;
-    min-height: 44px;
-  }
-  
-  .remove-item {
-    min-height: 44px;
-    min-width: 44px;
-  }
+  /* Formulario: El selector toma toda la fila superior */
+  .item-row-main { flex-wrap: wrap; gap: 8px; }
+  .item-row select { flex: 1 1 100%; min-height: 44px; margin-bottom: 4px; }
+  .cant-control { flex: 1 1 auto; }
+  .remove-item { min-height: 44px; min-width: 44px; display: flex; align-items: center; justify-content: center; }
 
   /* Inventario adaptable */
-  .inv-row-main {
-    flex-wrap: wrap;
-  }
-  .inv-input {
-    flex: 1 1 100%;
-    min-height: 44px;
-  }
-  
-  .modal { width: 90%; max-width: 320px; }
+  .inv-row-main { flex-wrap: wrap; gap: 8px; }
+  .inv-input { flex: 1 1 100%; min-height: 44px; }
+  .inv-row-top { flex-direction: column; align-items: flex-start; gap: 4px; }
+
+  /* Modal optimizado para pantallas estrechas */
+  .modal { width: 95%; max-width: 340px; padding: 20px; }
+  .modal-actions { flex-direction: column; }
+  .modal-actions button { width: 100%; min-height: 44px; }
 }
 
-/* ---------- FORM: filas con aviso de inventario ---------- */
-.item-row{ display:flex; flex-direction:column; gap:4px; }
-.item-row-main{ display:flex; gap:8px; align-items:center; }
-.item-hint{ font-size:11px; color:var(--carbon-60); padding-left:2px; }
-.item-hint-error{ color:var(--chile); font-weight:600; }
-
-.form-warning{ background:rgba(178,58,46,.1); color:var(--chile); border:1px solid rgba(178,58,46,.3);
-  border-radius:9px; padding:10px 12px; font-size:12.5px; font-weight:600; margin-top:14px; }
 
 /* ---------- INVENTARIO ---------- */
 .inventario-list{ display:flex; flex-direction:column; gap:18px; margin-bottom:18px; }
@@ -314,4 +318,292 @@ input, select{ font-family:'Inter',sans-serif; }
 .cant-control input::-webkit-inner-spin-button {
   -webkit-appearance: none;
   margin: 0;
+}
+/* ==========================================================
+   OPTIMIZACIONES DE RENDIMIENTO (Dispositivos Lentos)
+   ========================================================== */
+.view {
+  /* Permite al navegador omitir el renderizado de vistas ocultas, 
+     ahorrando muchísima memoria y CPU */
+  content-visibility: auto;
+}
+
+.view.active {
+  /* Activa la aceleración por hardware (GPU) para animaciones más fluidas */
+  will-change: transform, opacity;
+}
+
+.nav {
+  /* Desplazamiento suave nativo en dispositivos móviles antiguos */
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Evitar transiciones costosas en botones si el dispositivo es muy lento */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+/* ==========================================================
+   REDISEÑO VISUAL: CREAR COMANDA (PUNTO DE VENTA)
+   ========================================================== */
+
+/* Contenedor general centrado */
+.form-container {
+  max-width: 620px;
+  margin: 0 auto;
+}
+
+/* Encabezado con badge */
+.head-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.head-badge {
+  background: rgba(31, 58, 46, 0.1);
+  color: var(--hoja);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+
+/* Tarjeta Principal */
+.form-card {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  border: 1px solid rgba(43, 33, 24, 0.08);
+  box-shadow: 0 12px 32px rgba(43, 33, 24, 0.06);
+}
+
+/* Títulos de sección internos */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.form-group-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.form-group-title {
+  font-family: 'Fraunces', serif;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--carbon);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.group-icon {
+  font-size: 18px;
+}
+
+.form-group-sub {
+  font-size: 12px;
+  color: var(--carbon-60);
+}
+
+/* Input del Cliente estilizado */
+.input-wrapper input {
+  width: 100%;
+  padding: 12px 14px;
+  font-size: 15px;
+  border: 1.5px solid var(--linea);
+  border-radius: 11px;
+  background: var(--masa);
+  color: var(--carbon);
+  transition: all 0.2s ease;
+}
+
+.input-wrapper input:focus {
+  border-color: var(--elote-dark);
+  background: #FFF;
+  box-shadow: 0 0 0 3px rgba(227, 167, 43, 0.2);
+  outline: none;
+}
+
+/* Tarjeta individual por cada fila de Tamal en la lista */
+.item-row {
+  background: #FAF5E8;
+  border: 1px solid rgba(43, 33, 24, 0.08);
+  border-radius: 12px;
+  padding: 12px 14px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.item-row:hover {
+  box-shadow: 0 4px 12px rgba(43, 33, 24, 0.05);
+}
+
+.item-row-main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.item-row select.item-tipo {
+  flex: 1;
+  padding: 10px 12px;
+  border-radius: 9px;
+  border: 1px solid var(--linea);
+  background: #FFF;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--carbon);
+  cursor: pointer;
+}
+
+/* Botón de eliminar (Cruz estilo Badge circular) */
+.item-row .remove-item {
+  background: rgba(178, 58, 46, 0.1);
+  color: var(--chile);
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: bold;
+  transition: all 0.15s ease;
+  border: none;
+}
+
+.item-row .remove-item:hover {
+  background: var(--chile);
+  color: #FFF;
+}
+
+/* Avisos/hints debajo de cada tamal */
+.item-hint {
+  font-size: 11.5px;
+  margin-top: 6px;
+}
+
+/* Botón flotante/punteado "+ Agregar otro tamal" */
+.btn-add-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px;
+  background: rgba(227, 167, 43, 0.08);
+  border: 2px dashed rgba(227, 167, 43, 0.4);
+  color: var(--carbon);
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 4px;
+}
+
+.btn-add-item:hover {
+  background: rgba(227, 167, 43, 0.18);
+  border-color: var(--elote-dark);
+}
+
+.add-icon {
+  font-size: 18px;
+  font-weight: bold;
+  color: var(--elote-dark);
+}
+
+/* Tarjeta Resumen / Ticket de Pago */
+.order-summary-card {
+  background: var(--hoja);
+  color: var(--masa);
+  border-radius: 14px;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.summary-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: rgba(243, 233, 199, 0.7);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.summary-status-tag {
+  background: rgba(243, 233, 199, 0.15);
+  color: var(--elote);
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 10px;
+}
+
+.total-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px dashed rgba(243, 233, 199, 0.2);
+  padding-top: 10px;
+  margin-top: 4px;
+}
+
+.total-label {
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.total-amount {
+  font-size: 26px;
+  color: var(--elote);
+  letter-spacing: -0.02em;
+}
+
+/* Botón principal Crear Comanda */
+.btn-submit-order {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: var(--elote);
+  color: var(--hoja);
+  padding: 15px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 700;
+  box-shadow: 0 4px 14px rgba(227, 167, 43, 0.35);
+  transition: all 0.2s ease;
+  margin-top: 0;
+}
+
+.btn-submit-order:hover:not(:disabled) {
+  background: var(--elote-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(227, 167, 43, 0.45);
+}
+
+.btn-submit-order:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.btn-arrow {
+  font-size: 18px;
+  transition: transform 0.2s ease;
+}
+
+.btn-submit-order:hover .btn-arrow {
+  transform: translateX(4px);
 }
