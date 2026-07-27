@@ -409,6 +409,9 @@ function renderInvestCurrent() {
         <span>Inversión: <strong class="mono">$${actual.inversion.toFixed(0)}</strong></span>
         <span class="utilidad ${actual.utilidad >= 0 ? 'pos' : 'neg'}">Utilidad: <strong class="mono">$${actual.utilidad.toFixed(0)}</strong></span>
       </div>
+      <div class="invest-actions">
+        <button class="btn-ghost" onclick="cerrarSemanaActual()">Cerrar semana y reiniciar inventario</button>
+      </div>
     `;
   } else {
     el.innerHTML = `
@@ -417,6 +420,9 @@ function renderInvestCurrent() {
       <div class="invest-form">
         <input type="number" class="invest-input" id="invest-input-current" placeholder="Inversión realizada" step="0.01">
         <button class="btn-primary" onclick="registrarInversion('${STATE.semanaActual}', 'current')">Registrar inversión</button>
+      </div>
+      <div class="invest-actions">
+        <button class="btn-ghost" onclick="cerrarSemanaActual()">Cerrar semana y reiniciar inventario</button>
       </div>
     `;
   }
@@ -428,6 +434,23 @@ async function registrarInversion(semana, refId) {
   if (isNaN(inversion) || input.value === '') { alert('Escribe un monto de inversión'); return; }
   try {
     await apiPost('guardarInversion', { semana, inversion });
+    await cargarTodo();
+  } catch (err) {
+    onError(err);
+  }
+}
+
+async function cerrarSemanaActual() {
+  const input = document.getElementById('invest-input-current');
+  const inversion = input && input.value !== '' ? Number(input.value) : null;
+  if (input && input.value !== '' && Number.isNaN(inversion)) {
+    alert('El monto de inversión debe ser numérico');
+    return;
+  }
+  const confirmar = window.confirm('¿Cerrar esta semana y empezar una nueva con el inventario en cero?');
+  if (!confirmar) return;
+  try {
+    await apiPost('cerrarSemana', { semana: STATE.semanaActual, inversion });
     await cargarTodo();
   } catch (err) {
     onError(err);

@@ -261,6 +261,7 @@ input, select{ font-family:'Inter',sans-serif; }
 .utilidad.pos{ color:var(--hoja); }
 .utilidad.neg{ color:var(--chile); }
 .invest-form{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+.invest-actions{ display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
 .invest-form .invest-input{ flex:1; min-width:160px; padding:9px 10px; border-radius:8px;
   border:1px solid var(--linea); background:var(--masa); font-size:14px; }
 

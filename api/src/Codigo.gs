@@ -72,6 +72,9 @@ function doGet(e) {
       case 'guardarInversion':
         data = guardarInversion(p.semana, Number(p.inversion));
         break;
+      case 'cerrarSemana':
+        data = cerrarSemana(p.semana, p.inversion != null && p.inversion !== '' ? Number(p.inversion) : null);
+        break;
       default:
         throw new Error('Acción no reconocida: ' + action);
     }
@@ -186,6 +189,36 @@ function guardarConfig(precio, tipos) {
   return getConfig();
 }
 
+function getSemanaActiva() {
+  const { config } = ensureSheets();
+  const semana = config.getRange('E1').getValue();
+  return semana ? String(semana) : '';
+}
+
+function guardarSemanaActiva(semana) {
+  const { config } = ensureSheets();
+  config.getRange('E1').setValue(String(semana));
+  return String(semana);
+}
+
+function getSemanaActualContext() {
+  const semanaActiva = getSemanaActiva();
+  if (semanaActiva) return semanaActiva;
+  return getWeekInfo(new Date()).key;
+}
+
+function getSemanaSiguiente(semana) {
+  const parts = String(semana || '').split('-');
+  if (parts.length < 3) return semana;
+  const year = Number(parts[0]);
+  const month = Number(parts[1]);
+  const weekNum = Number(parts[2].replace('S', ''));
+  const startDate = new Date(year, month - 1, 1 + (weekNum - 1) * 7);
+  const nextDate = new Date(startDate);
+  nextDate.setDate(startDate.getDate() + 7);
+  return getWeekInfo(nextDate).key;
+}
+
 /* ---------------------- PEDIDOS ---------------------- */
 
 /** items: [{tipo: 'Verde', cantidad: 3}, ...] */
@@ -194,7 +227,7 @@ function crearPedido(cliente, items) {
   if (!items || !items.length) throw new Error('El pedido no tiene tamales');
 
   const now = new Date();
-  const semana = getWeekInfo(now).key;
+  const semana = getSemanaActualContext();
 
   // Validar contra inventario configurado para esta semana
   const inventarioActual = getInventarioSemana(semana);
@@ -374,6 +407,41 @@ function guardarInversion(semana, inversion) {
   return obtenerResumenSemanal().find(s => s.semana === semana);
 }
 
+function cerrarSemana(semana, inversion) {
+  const semanaActual = semana || getSemanaActualContext();
+  const semanaSiguiente = getSemanaSiguiente(semanaActual);
+
+  if (inversion != null && inversion !== '') {
+    guardarInversion(semanaActual, Number(inversion));
+  }
+
+  const { tipos } = getConfig();
+  const { inventario } = ensureSheets();
+  const lastRow = inventario.getLastRow();
+  const data = lastRow >= 2 ? inventario.getRange(2, 1, lastRow - 1, 3).getValues() : [];
+
+  tipos.forEach(tipo => {
+    let found = false;
+    for (let i = 0; i < data.length; i++) {
+      if (data[i][0] === semanaSiguiente && data[i][1] === tipo) {
+        inventario.getRange(i + 2, 3).setValue(0);
+        found = true;
+        break;
+      }
+    }
+    if (!found) {
+      inventario.appendRow([semanaSiguiente, tipo, 0]);
+    }
+  });
+
+  guardarSemanaActiva(semanaSiguiente);
+  return {
+    semanaCerrada: semanaActual,
+    semanaNueva: semanaSiguiente,
+    inventario: getInventarioSemana(semanaSiguiente)
+  };
+}
+
 function obtenerResumenSemanal() {
   const completados = listarPedidos('Completado');
   const map = {};
@@ -405,8 +473,7 @@ function obtenerResumenSemanal() {
 
 function getDashboardData() {
   const todos = listarPedidos(null);
-  const now = new Date();
-  const semanaActual = getWeekInfo(now).key;
+  const semanaActual = getSemanaActualContext();
   return {
     todos,
     completados: todos.filter(p => p.estado === 'Completado'),
