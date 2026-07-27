@@ -1,167 +1,189 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Tamales — Panel de control</title>
-  <link rel="stylesheet" href="styles.css">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
-  <script src="https://www.gstatic.com/charts/loader.js"></script>
-</head>
-<body>
-  <div class="app">
-    <aside class="sidebar">
-      <div class="brand">
-        <span class="brand-mark">🫔</span>
-        <span class="brand-name">Tamales<br><small>Panel de control</small></span>
-      </div>
-      <nav class="nav">
-        <button class="nav-item active" data-view="nuevo">Nuevo pedido</button>
-        <button class="nav-item" data-view="activos">Pedidos activos</button>
-        <button class="nav-item" data-view="inventario">Inventario</button>
-        <button class="nav-item" data-view="dashboard">Ganancias</button>
-        <button class="nav-item" data-view="historico">Histórico</button>
-      </nav>
-      <div class="sidebar-foot">
-        <div class="week-chip" id="currentWeekChip">Semana —</div>
-        <div class="conn-status" id="connStatus">Conectando…</div>
-      </div>
-    </aside>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Tamales — Panel de control</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://www.gstatic.com/charts/loader.js"></script>
+  </head>
+  <body>
+    <div class="app">
+      <aside class="sidebar">
+        <div class="brand">
+          <span class="brand-mark">🫔</span>
+          <span class="brand-name"
+            >Tamales<br /><small>Panel de control</small></span
+          >
+        </div>
+        <nav class="nav">
+          <button class="nav-item active" data-view="nuevo">
+            Nuevo pedido
+          </button>
+          <button class="nav-item" data-view="activos">Pedidos activos</button>
+          <button class="nav-item" data-view="inventario">Inventario</button>
+          <button class="nav-item" data-view="dashboard">Ganancias</button>
+          <button class="nav-item" data-view="historico">Histórico</button>
+        </nav>
+        <div class="sidebar-foot">
+          <div class="week-chip" id="currentWeekChip">Semana —</div>
+          <div class="conn-status" id="connStatus">Conectando…</div>
+        </div>
+      </aside>
 
-    <main class="content">
-      
-      <!-- NUEVO PEDIDO -->
-      <section id="view-nuevo" class="view active">
-        <header class="view-head">
-          <div class="head-title-row">
-            <h1>Nueva comanda</h1>
-          </div>
-        </header>
-
-        <div class="form-container">
-          <div class="card form-card">
-            
-            <!-- 1. Sección Cliente -->
-            <div class="form-group">
-              <label for="clienteInput" class="form-group-title">
-                <span class="group-icon">👤</span> Nombre del cliente
-              </label>
-              <div class="input-wrapper">
-                <input type="text" id="clienteInput" placeholder="Nombre" autocomplete="off">
-              </div>
+      <main class="content">
+        <!-- NUEVO PEDIDO -->
+        <section id="view-nuevo" class="view active">
+          <header class="view-head">
+            <div class="head-title-row">
+              <h1>Nueva comanda</h1>
             </div>
+          </header>
 
-            <!-- 2. Sección Detalle del Pedido -->
-            <div class="form-group">
-              <div class="form-group-header">
-                <span class="form-group-title"><span class="group-icon">🫔</span> Tamales solicitados</span>
-                <span class="form-group-sub">Selecciona tipo y cantidad</span>
+          <div class="form-container">
+            <div class="card form-card">
+              <!-- 1. Sección Cliente -->
+              <div class="form-group">
+                <label for="clienteInput" class="form-group-title">
+                  <span class="group-icon">👤</span> Nombre del cliente
+                </label>
+                <div class="input-wrapper">
+                  <input
+                    type="text"
+                    id="clienteInput"
+                    placeholder="Nombre"
+                    autocomplete="off"
+                  />
+                </div>
               </div>
-              
-              <div id="itemsList" class="items-list"></div>
 
-              <button type="button" class="btn-add-item" id="addItemBtn">
-                <span class="add-icon">+</span> Agregar otro tamal
+              <!-- 2. Sección Detalle del Pedido -->
+              <div class="form-group">
+                <div class="form-group-header">
+                  <span class="form-group-title"
+                    ><span class="group-icon">🫔</span> Tamales
+                    solicitados</span
+                  >
+                  <span class="form-group-sub">Selecciona tipo y cantidad</span>
+                </div>
+
+                <div id="itemsList" class="items-list"></div>
+
+                <button type="button" class="btn-add-item" id="addItemBtn">
+                  <span class="add-icon">+</span> Agregar otro tamal
+                </button>
+              </div>
+
+              <!-- 3. Ticket / Resumen de Compra -->
+              <div class="order-summary-card">
+                <div class="summary-top">
+                  <span>Resumen del pedido</span>
+                  <span class="summary-status-tag">Cobro estimado</span>
+                </div>
+                <div class="total-row">
+                  <span class="total-label">Total a cobrar</span>
+                  <span class="mono total-amount" id="totalEstimado">$0</span>
+                </div>
+                <div id="pedidoWarning" class="form-warning" hidden></div>
+              </div>
+
+              <!-- 4. Botón de Acción -->
+              <button class="btn-primary btn-submit-order" id="crearPedidoBtn">
+                <span>Crear comanda</span>
+                <span class="btn-arrow">→</span>
               </button>
             </div>
+          </div>
+        </section>
 
-            <!-- 3. Ticket / Resumen de Compra -->
-            <div class="order-summary-card">
-              <div class="summary-top">
-                <span>Resumen del pedido</span>
-                <span class="summary-status-tag">Cobro estimado</span>
-              </div>
-              <div class="total-row">
-                <span class="total-label">Total a cobrar</span>
-                <span class="mono total-amount" id="totalEstimado">$0</span>
-              </div>
-              <div id="pedidoWarning" class="form-warning" hidden></div>
-            </div>
+        <!-- PEDIDOS ACTIVOS -->
+        <section id="view-activos" class="view">
+          <header class="view-head">
+            <h1>Pedidos activos</h1>
+            <p>Marca como pagado cuando el cliente complete su pedido</p>
+          </header>
+          <div id="pedidosActivosList" class="tickets-grid"></div>
+        </section>
 
-            <!-- 4. Botón de Acción -->
-            <button class="btn-primary btn-submit-order" id="crearPedidoBtn">
-              <span>Crear comanda</span>
-              <span class="btn-arrow">→</span>
+        <!-- INVENTARIO -->
+        <section id="view-inventario" class="view">
+          <header class="view-head">
+            <h1>
+              Inventario — <span id="inventarioSemanaLabel">esta semana</span>
+            </h1>
+            <p>
+              Define cuántos tamales de cada tipo tienes disponibles. Las
+              comandas se descuentan automáticamente.
+            </p>
+          </header>
+          <div class="card">
+            <div id="inventarioList" class="inventario-list"></div>
+            <button class="btn-primary" id="guardarInventarioBtn">
+              Guardar inventario
             </button>
-
           </div>
-        </div>
-      </section>
+        </section>
 
-      <!-- PEDIDOS ACTIVOS -->
-      <section id="view-activos" class="view">
-        <header class="view-head">
-          <h1>Pedidos activos</h1>
-          <p>Marca como pagado cuando el cliente complete su pedido</p>
-        </header>
-        <div id="pedidosActivosList" class="tickets-grid"></div>
-      </section>
-
-      <!-- INVENTARIO -->
-      <section id="view-inventario" class="view">
-        <header class="view-head">
-          <h1>Inventario — <span id="inventarioSemanaLabel">esta semana</span></h1>
-          <p>Define cuántos tamales de cada tipo tienes disponibles. Las comandas se descuentan automáticamente.</p>
-        </header>
-        <div class="card">
-          <div id="inventarioList" class="inventario-list"></div>
-          <button class="btn-primary" id="guardarInventarioBtn">Guardar inventario</button>
-        </div>
-      </section>
-
-      <!-- DASHBOARD -->
-      <section id="view-dashboard" class="view">
-        <header class="view-head">
-          <h1>Ganancias</h1>
-          <p>Resumen de <span id="dashboardSemanaLabel">esta semana</span></p>
-        </header>
-        <div class="stats-row">
-          <div class="stat-card">
-            <span class="stat-label">Esta semana</span>
-            <span class="stat-value mono" id="statSemanaActual">$0</span>
+        <!-- DASHBOARD -->
+        <section id="view-dashboard" class="view">
+          <header class="view-head">
+            <h1>Ganancias</h1>
+            <p>Resumen de <span id="dashboardSemanaLabel">esta semana</span></p>
+          </header>
+          <div class="stats-row">
+            <div class="stat-card">
+              <span class="stat-label">Esta semana</span>
+              <span class="stat-value mono" id="statSemanaActual">$0</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-label">Pedidos completados</span>
+              <span class="stat-value mono" id="statCompletados">0</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-label">Pedidos pendientes</span>
+              <span class="stat-value mono" id="statPendientes">0</span>
+            </div>
           </div>
-          <div class="stat-card">
-            <span class="stat-label">Pedidos completados</span>
-            <span class="stat-value mono" id="statCompletados">0</span>
+          <div class="card chart-card">
+            <div id="chartGanancias"></div>
           </div>
-          <div class="stat-card">
-            <span class="stat-label">Pedidos pendientes</span>
-            <span class="stat-value mono" id="statPendientes">0</span>
-          </div>
-        </div>
-        <div class="card chart-card">
-          <div id="chartGanancias"></div>
-        </div>
-        <div class="card invest-card" id="investCardCurrent"></div>
-      </section>
+          <div class="card invest-card" id="investCardCurrent"></div>
+        </section>
 
-      <!-- HISTORICO -->
-      <section id="view-historico" class="view">
-        <header class="view-head">
-          <h1>Histórico de ventas</h1>
-          <p>Total, inversión y utilidad por semana</p>
-        </header>
-        <div id="historicoList"></div>
-      </section>
-    </main>
-  </div>
+        <!-- HISTORICO -->
+        <section id="view-historico" class="view">
+          <header class="view-head">
+            <h1>Histórico de ventas</h1>
+            <p>Total, inversión y utilidad por semana</p>
+          </header>
+          <div id="historicoList"></div>
+        </section>
+      </main>
+    </div>
 
-  <div class="modal-overlay" id="modalOverlay">
-    <div class="modal">
-      <h3>Completar pedido</h3>
-      <p id="modalClienteInfo"></p>
-      <label>Monto cobrado
-        <input type="number" id="montoCobradoInput" step="0.01">
-      </label>
-      <div class="modal-actions">
-        <button class="btn-ghost" id="modalCancelBtn">Cancelar</button>
-        <button class="btn-primary" id="modalConfirmBtn">Confirmar cobro</button>
+    <div class="modal-overlay" id="modalOverlay">
+      <div class="modal">
+        <h3>Completar pedido</h3>
+        <p id="modalClienteInfo"></p>
+        <label
+          >Monto cobrado
+          <input type="number" id="montoCobradoInput" step="0.01" />
+        </label>
+        <div class="modal-actions">
+          <button class="btn-ghost" id="modalCancelBtn">Cancelar</button>
+          <button class="btn-primary" id="modalConfirmBtn">
+            Confirmar cobro
+          </button>
+        </div>
       </div>
     </div>
-  </div>
 
-  <script src="config.js"></script>
-  <script src="app.js"></script>
-</body>
+    <script src="config.js"></script>
+    <script src="app.js"></script>
+  </body>
 </html>
