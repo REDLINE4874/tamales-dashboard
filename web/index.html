@@ -37,15 +37,22 @@
       </aside>
 
       <main class="content">
-        <!-- NUEVO PEDIDO -->
+        <!-- NUEVO PEDIDO / EDICIÓN -->
         <section id="view-nuevo" class="view active">
           <header class="view-head">
             <div class="head-title-row">
-              <h1>Nueva comanda</h1>
+              <h1 id="formTitle">Nueva comanda</h1>
             </div>
           </header>
 
           <div class="form-container">
+            <div class="edit-banner" id="editBanner" hidden>
+              <span>Editando comanda de <strong id="editBannerCliente"></strong></span>
+              <button type="button" class="btn-ghost" id="cancelEditBtn">
+                Cancelar edición
+              </button>
+            </div>
+
             <div class="card form-card">
               <!-- 1. Sección Cliente -->
               <div class="form-group">
@@ -105,7 +112,7 @@
         <section id="view-activos" class="view">
           <header class="view-head">
             <h1>Pedidos activos</h1>
-            <p>Marca como pagado cuando el cliente complete su pedido</p>
+            <p>Marca como pagado, edita o elimina una comanda pendiente</p>
           </header>
           <div id="pedidosActivosList" class="tickets-grid"></div>
         </section>

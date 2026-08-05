@@ -4,18 +4,36 @@
    bloqueo de CORS que Apps Script no resuelve con fetch().
    ========================================================== */
 
-function jsonpRequest(action, params = {}) {
+function jsonpRequest(action, params = {}, timeoutMs = 25000) {
   return new Promise((resolve, reject) => {
     const callbackName =
       "tamalesCb_" + Date.now() + "_" + Math.floor(Math.random() * 1e6);
     const script = document.createElement("script");
+    let settled = false;
+    let timer = null;
 
     const cleanup = () => {
       delete window[callbackName];
       script.remove();
+      if (timer) clearTimeout(timer);
     };
 
+    // Evita que una respuesta tardía (o duplicada) se procese dos veces,
+    // y evita que la UI se quede colgada indefinidamente en "Creando…".
+    timer = setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      reject(
+        new Error(
+          "La API tardó demasiado en responder. Revisa tu conexión e inténtalo de nuevo.",
+        ),
+      );
+    }, timeoutMs);
+
     window[callbackName] = (response) => {
+      if (settled) return;
+      settled = true;
       cleanup();
       if (response && response.ok) resolve(response.data);
       else
@@ -32,6 +50,8 @@ function jsonpRequest(action, params = {}) {
 
     script.src = url.toString();
     script.onerror = () => {
+      if (settled) return;
+      settled = true;
       cleanup();
       reject(new Error("No se pudo conectar con la API"));
     };
@@ -60,6 +80,11 @@ let STATE = {
   semanaActualLabel: "",
 };
 let chartsReady = false;
+
+// Estado del formulario de "Nuevo pedido" / edición
+let creatingPedido = false;
+let editingPedidoId = null;
+let editingOriginalItems = null; // detalle original del pedido que se está editando
 
 google.charts.load("current", { packages: ["corechart"] });
 google.charts.setOnLoadCallback(() => {
@@ -148,21 +173,20 @@ function onError(err) {
 }
 
 /* ==========================================================
-   NUEVO PEDIDO
+   NUEVO PEDIDO / EDICIÓN DE PEDIDO
    ========================================================== */
 
-function addItemRow() {
+function addItemRow(presetTipo, presetCantidad) {
   const list = document.getElementById("itemsList");
   const row = document.createElement("div");
   row.className = "item-row";
 
-  // Se agregó el contenedor .cant-control con los botones + y -
   row.innerHTML = `
     <div class="item-row-main">
       <select class="item-tipo">${optionsHTML()}</select>
       <div class="cant-control">
         <button type="button" class="btn-minus">−</button>
-        <input type="number" class="item-cant" min="1" value="1" placeholder="Cant.">
+        <input type="number" class="item-cant" min="1" value="${presetCantidad || 1}" placeholder="Cant.">
         <button type="button" class="btn-plus">+</button>
       </div>
       <button type="button" class="remove-item">✕</button>
@@ -170,7 +194,13 @@ function addItemRow() {
     <div class="item-hint"></div>
   `;
 
-  // Eventos de eliminación y validación nativa
+  if (presetTipo) {
+    const sel = row.querySelector(".item-tipo");
+    if ([...sel.options].some((o) => o.value === presetTipo)) {
+      sel.value = presetTipo;
+    }
+  }
+
   row.querySelector(".remove-item").addEventListener("click", () => {
     row.remove();
     refreshFormState();
@@ -179,9 +209,7 @@ function addItemRow() {
   input.addEventListener("input", refreshFormState);
   row.querySelector(".item-tipo").addEventListener("change", refreshFormState);
 
-  // Lógica de los botones + y -
   row.querySelector(".btn-minus").addEventListener("click", () => {
-    // Evita que baje de 1
     input.value = Math.max(1, Number(input.value) - 1);
     refreshFormState();
   });
@@ -203,13 +231,18 @@ function optionsHTML() {
 
 function refreshItemRowOptions() {
   document.querySelectorAll(".item-tipo").forEach((sel) => {
+    const current = sel.value;
     sel.innerHTML = optionsHTML();
+    if ([...sel.options].some((o) => o.value === current)) sel.value = current;
   });
   refreshFormState();
 }
 
 /** Recalcula total, valida disponibilidad de inventario por renglón y
- *  habilita/deshabilita el botón de crear comanda. */
+ *  habilita/deshabilita el botón de crear/guardar comanda.
+ *  Si se está editando un pedido existente, se le "devuelven" al
+ *  inventario disponible las cantidades que ese pedido ya tenía
+ *  reservadas, para no marcar falso excedente sobre sí mismo. */
 function refreshFormState() {
   let cantidadTotal = 0;
   let hayExcedente = false;
@@ -222,15 +255,23 @@ function refreshFormState() {
     const hint = row.querySelector(".item-hint");
     const inv = (STATE.inventario || []).find((i) => i.tipo === tipo);
 
+    let disponibleAjustado = inv ? inv.disponible : 0;
+    if (editingOriginalItems && inv && inv.configurado) {
+      const reservadoOriginal = editingOriginalItems
+        .filter((d) => d.tipo === tipo)
+        .reduce((sum, d) => sum + d.cantidad, 0);
+      disponibleAjustado = inv.disponible + reservadoOriginal;
+    }
+
     if (!inv || !inv.configurado) {
       hint.textContent = "Sin límite configurado";
       hint.className = "item-hint";
-    } else if (cantidad > inv.disponible) {
-      hint.textContent = `Solo quedan ${inv.disponible} disponibles de ${tipo}`;
+    } else if (cantidad > disponibleAjustado) {
+      hint.textContent = `Solo quedan ${disponibleAjustado} disponibles de ${tipo}`;
       hint.className = "item-hint item-hint-error";
       hayExcedente = true;
     } else {
-      hint.textContent = `Disponible: ${inv.disponible}`;
+      hint.textContent = `Disponible: ${disponibleAjustado}`;
       hint.className = "item-hint";
     }
   });
@@ -252,13 +293,19 @@ function refreshFormState() {
 }
 
 function setupForm() {
-  document.getElementById("addItemBtn").addEventListener("click", addItemRow);
+  document.getElementById("addItemBtn").addEventListener("click", () => addItemRow());
   document
     .getElementById("crearPedidoBtn")
-    .addEventListener("click", crearPedido);
+    .addEventListener("click", guardarPedido);
+  document
+    .getElementById("cancelEditBtn")
+    .addEventListener("click", cancelarEdicion);
 }
 
-async function crearPedido() {
+async function guardarPedido() {
+  // Guardia extra contra doble clic / doble tap, independiente de btn.disabled
+  if (creatingPedido) return;
+
   const cliente = document.getElementById("clienteInput").value.trim();
   if (!cliente) {
     alert("Escribe el nombre del cliente");
@@ -276,23 +323,78 @@ async function crearPedido() {
     return;
   }
 
+  creatingPedido = true;
   const btn = document.getElementById("crearPedidoBtn");
+  const btnLabel = btn.querySelector("span");
+  const originalLabel = btnLabel.textContent;
   btn.disabled = true;
-  btn.textContent = "Creando…";
+  btnLabel.textContent = editingPedidoId ? "Guardando…" : "Creando…";
 
   try {
-    await apiPost("crearPedido", { cliente, items });
-    document.getElementById("clienteInput").value = "";
-    document.getElementById("itemsList").innerHTML = "";
-    addItemRow();
+    if (editingPedidoId) {
+      await apiPost("editarPedido", { id: editingPedidoId, cliente, items });
+    } else {
+      // Id único por intento: úsalo en Apps Script (LockService + caché) para
+      // descartar una segunda ejecución si el mismo request llega duplicado.
+      const clientRequestId =
+        window.crypto && crypto.randomUUID
+          ? crypto.randomUUID()
+          : `${Date.now()}_${Math.random().toString(36).slice(2)}`;
+      await apiPost("crearPedido", { cliente, items, clientRequestId });
+    }
+    cancelarEdicion();
     await cargarTodo();
     document.querySelector('.nav-item[data-view="activos"]').click();
   } catch (err) {
     onError(err);
+    btnLabel.textContent = originalLabel;
   } finally {
+    creatingPedido = false;
     btn.disabled = false;
-    btn.textContent = "Crear comanda";
   }
+}
+
+/** Abre el formulario de "Nuevo pedido" en modo edición, precargado
+ *  con los datos de un pedido pendiente existente. */
+function abrirEdicionPedido(id) {
+  const pedido = STATE.pendientes.find((p) => p.id === id);
+  if (!pedido) return;
+
+  editingPedidoId = pedido.id;
+  editingOriginalItems = pedido.detalle.map((d) => ({
+    tipo: d.tipo,
+    cantidad: d.cantidad,
+  }));
+
+  document.getElementById("clienteInput").value = pedido.cliente;
+  document.getElementById("itemsList").innerHTML = "";
+  pedido.detalle.forEach((d) => addItemRow(d.tipo, d.cantidad));
+
+  document.getElementById("formTitle").textContent = "Editar comanda";
+  document.getElementById("crearPedidoBtn").querySelector("span").textContent =
+    "Guardar cambios";
+  document.getElementById("editBannerCliente").textContent = pedido.cliente;
+  document.getElementById("editBanner").hidden = false;
+
+  document.querySelector('.nav-item[data-view="nuevo"]').click();
+  refreshFormState();
+}
+
+/** Sale del modo edición y deja el formulario listo para un pedido nuevo. */
+function cancelarEdicion() {
+  editingPedidoId = null;
+  editingOriginalItems = null;
+
+  document.getElementById("clienteInput").value = "";
+  document.getElementById("itemsList").innerHTML = "";
+  addItemRow();
+
+  document.getElementById("formTitle").textContent = "Nueva comanda";
+  document.getElementById("crearPedidoBtn").querySelector("span").textContent =
+    "Crear comanda";
+  document.getElementById("editBanner").hidden = true;
+
+  refreshFormState();
 }
 
 /* ==========================================================
@@ -319,12 +421,35 @@ function renderPedidosActivos() {
       </ul>
       <div class="ticket-foot">
         <span class="ticket-total mono">$${Number(p.montoEsperado).toFixed(0)}</span>
+      </div>
+      <div class="ticket-actions">
+        <button class="ticket-edit-btn" onclick="abrirEdicionPedido('${p.id}')">Editar</button>
+        <button class="ticket-delete-btn" onclick="eliminarPedido('${p.id}')">Eliminar</button>
         <button class="ticket-complete-btn" onclick="abrirModal('${p.id}', '${escapeHtml(p.cliente)}', ${p.montoEsperado})">Marcar pagado</button>
       </div>
     </div>
   `,
     )
     .join("");
+}
+
+/** Elimina un pedido pendiente. El backend debe devolver sus tamales
+ *  al inventario disponible de la semana correspondiente. */
+async function eliminarPedido(id) {
+  const pedido = STATE.pendientes.find((p) => p.id === id);
+  const nombre = pedido ? pedido.cliente : "este pedido";
+  const confirmar = window.confirm(
+    `¿Eliminar la comanda de ${nombre}? Los tamales regresarán al inventario disponible.`,
+  );
+  if (!confirmar) return;
+
+  try {
+    await apiPost("eliminarPedido", { id });
+    if (editingPedidoId === id) cancelarEdicion();
+    await cargarTodo();
+  } catch (err) {
+    onError(err);
+  }
 }
 
 /* ==========================================================

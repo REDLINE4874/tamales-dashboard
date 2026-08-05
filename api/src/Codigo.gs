@@ -30,6 +30,25 @@ function inicializarHojas() {
   Logger.log('Listo: pestañas Pedidos, Config, Inventario y Cierres creadas o verificadas.');
 }
 
+/* ---------------------- BLOQUEO ---------------------- */
+
+/**
+ * Ejecuta fn() con el bloqueo del script activo, para que dos peticiones
+ * concurrentes (doble clic, reintento de red, etc.) no lean el mismo
+ * inventario "disponible" y ambas pasen la validación antes de escribir.
+ * Sin esto, crearPedido/editarPedido pueden generar pedidos duplicados
+ * o vender más tamales de los que hay.
+ */
+function withLock(fn) {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(15000); // espera hasta 15s si otra petición está escribiendo
+  try {
+    return fn();
+  } finally {
+    lock.releaseLock();
+  }
+}
+
 /* ---------------------- ENRUTADOR ---------------------- */
 
 function doGet(e) {
@@ -52,7 +71,10 @@ function doGet(e) {
         data = getInventarioSemana(p.semana || getWeekInfo(new Date()).key);
         break;
       case 'crearPedido':
-        data = crearPedido(p.cliente, JSON.parse(p.items || '[]'));
+        data = crearPedido(p.cliente, JSON.parse(p.items || '[]'), p.clientRequestId || null);
+        break;
+      case 'editarPedido':
+        data = editarPedido(p.id, p.cliente, JSON.parse(p.items || '[]'));
         break;
       case 'completarPedido':
         data = completarPedido(p.id, Number(p.montoCobrado));
@@ -221,40 +243,126 @@ function getSemanaSiguiente(semana) {
 
 /* ---------------------- PEDIDOS ---------------------- */
 
-/** items: [{tipo: 'Verde', cantidad: 3}, ...] */
-function crearPedido(cliente, items) {
+/**
+ * items: [{tipo: 'Verde', cantidad: 3}, ...]
+ * clientRequestId: id único que genera el front por cada intento de envío.
+ * Si la misma petición llega dos veces (doble tap, reintento de red, JSONP
+ * que se resolvió tarde y el usuario volvió a mandar), se devuelve el
+ * mismo pedido ya creado en vez de duplicarlo.
+ */
+function crearPedido(cliente, items, clientRequestId) {
   if (!cliente) throw new Error('Falta el nombre del cliente');
   if (!items || !items.length) throw new Error('El pedido no tiene tamales');
 
-  const now = new Date();
-  const semana = getSemanaActualContext();
+  return withLock(() => {
+    const cache = CacheService.getScriptCache();
+    const cacheKey = clientRequestId ? 'pedido_' + clientRequestId : null;
 
-  // Validar contra inventario configurado para esta semana
-  const inventarioActual = getInventarioSemana(semana);
-  const invPorTipo = {};
-  inventarioActual.forEach(i => { invPorTipo[i.tipo] = i; });
-
-  items.forEach(item => {
-    const inv = invPorTipo[item.tipo];
-    if (inv && inv.configurado && Number(item.cantidad) > inv.disponible) {
-      throw new Error(
-        'No hay suficiente inventario de "' + item.tipo + '". Disponible: ' + inv.disponible
-      );
+    if (cacheKey) {
+      const cached = cache.get(cacheKey);
+      if (cached) return JSON.parse(cached);
     }
+
+    const now = new Date();
+    const semana = getSemanaActualContext();
+
+    // Validar contra inventario configurado para esta semana
+    const inventarioActual = getInventarioSemana(semana);
+    const invPorTipo = {};
+    inventarioActual.forEach(i => { invPorTipo[i.tipo] = i; });
+
+    items.forEach(item => {
+      const inv = invPorTipo[item.tipo];
+      if (inv && inv.configurado && Number(item.cantidad) > inv.disponible) {
+        throw new Error(
+          'No hay suficiente inventario de "' + item.tipo + '". Disponible: ' + inv.disponible
+        );
+      }
+    });
+
+    const { pedidos } = ensureSheets();
+    const { precio } = getConfig();
+    const cantidadTotal = items.reduce((s, i) => s + Number(i.cantidad || 0), 0);
+    const montoEsperado = cantidadTotal * precio;
+    const id = Utilities.getUuid();
+
+    pedidos.appendRow([
+      id, now, semana, cliente, JSON.stringify(items),
+      cantidadTotal, montoEsperado, '', 'Pendiente', ''
+    ]);
+
+    const result = { id, montoEsperado, semana };
+    if (cacheKey) {
+      // Se guarda por 2 minutos: tiempo de sobra para cubrir un reintento
+      // de red, pero sin dejar basura acumulada en el caché.
+      cache.put(cacheKey, JSON.stringify(result), 120);
+    }
+    return result;
   });
+}
 
-  const { pedidos } = ensureSheets();
-  const { precio } = getConfig();
-  const cantidadTotal = items.reduce((s, i) => s + Number(i.cantidad || 0), 0);
-  const montoEsperado = cantidadTotal * precio;
-  const id = Utilities.getUuid();
+/**
+ * Reemplaza cliente y detalle de un pedido pendiente existente.
+ * Solo se permite editar pedidos en estado "Pendiente" (uno ya completado
+ * ya afectó las ganancias registradas y no debería cambiar en silencio).
+ * Al validar inventario, se le "devuelven" al disponible las cantidades
+ * que el propio pedido ya tenía reservadas, para no marcar falso
+ * excedente contra sí mismo.
+ */
+function editarPedido(id, cliente, items) {
+  if (!id) throw new Error('Falta el id del pedido');
+  if (!cliente) throw new Error('Falta el nombre del cliente');
+  if (!items || !items.length) throw new Error('El pedido no tiene tamales');
 
-  pedidos.appendRow([
-    id, now, semana, cliente, JSON.stringify(items),
-    cantidadTotal, montoEsperado, '', 'Pendiente', ''
-  ]);
+  return withLock(() => {
+    const { pedidos } = ensureSheets();
+    const lastRow = pedidos.getLastRow();
+    if (lastRow < 2) throw new Error('Pedido no encontrado');
+    const ids = pedidos.getRange(2, 1, lastRow - 1, 1).getValues().flat();
+    const rowIndex = ids.indexOf(id);
+    if (rowIndex === -1) throw new Error('Pedido no encontrado');
+    const row = rowIndex + 2;
 
-  return { id, montoEsperado, semana };
+    const estadoActual = pedidos.getRange(row, 9).getValue();
+    if (estadoActual !== 'Pendiente') {
+      throw new Error('Solo se pueden editar pedidos pendientes');
+    }
+
+    const semana = pedidos.getRange(row, 3).getValue();
+
+    const detalleOriginal = JSON.parse(pedidos.getRange(row, 5).getValue() || '[]');
+    const reservadoOriginal = {};
+    detalleOriginal.forEach(d => {
+      reservadoOriginal[d.tipo] = (reservadoOriginal[d.tipo] || 0) + Number(d.cantidad);
+    });
+
+    const inventarioActual = getInventarioSemana(semana);
+    const invPorTipo = {};
+    inventarioActual.forEach(i => { invPorTipo[i.tipo] = i; });
+
+    items.forEach(item => {
+      const inv = invPorTipo[item.tipo];
+      if (inv && inv.configurado) {
+        const disponibleAjustado = inv.disponible + (reservadoOriginal[item.tipo] || 0);
+        if (Number(item.cantidad) > disponibleAjustado) {
+          throw new Error(
+            'No hay suficiente inventario de "' + item.tipo + '". Disponible: ' + disponibleAjustado
+          );
+        }
+      }
+    });
+
+    const { precio } = getConfig();
+    const cantidadTotal = items.reduce((s, i) => s + Number(i.cantidad || 0), 0);
+    const montoEsperado = cantidadTotal * precio;
+
+    pedidos.getRange(row, 4).setValue(cliente);
+    pedidos.getRange(row, 5).setValue(JSON.stringify(items));
+    pedidos.getRange(row, 6).setValue(cantidadTotal);
+    pedidos.getRange(row, 7).setValue(montoEsperado);
+
+    return { id, montoEsperado, semana };
+  });
 }
 
 function listarPedidos(filtroEstado) {
@@ -280,41 +388,53 @@ function listarPedidos(filtroEstado) {
 }
 
 function completarPedido(id, montoCobrado) {
-  const { pedidos } = ensureSheets();
-  const lastRow = pedidos.getLastRow();
-  if (lastRow < 2) throw new Error('Pedido no encontrado');
-  const ids = pedidos.getRange(2, 1, lastRow - 1, 1).getValues().flat();
-  const rowIndex = ids.indexOf(id);
-  if (rowIndex === -1) throw new Error('Pedido no encontrado');
-  const row = rowIndex + 2;
-  pedidos.getRange(row, 8).setValue(Number(montoCobrado));
-  pedidos.getRange(row, 9).setValue('Completado');
-  pedidos.getRange(row, 10).setValue(new Date());
-  return true;
+  return withLock(() => {
+    const { pedidos } = ensureSheets();
+    const lastRow = pedidos.getLastRow();
+    if (lastRow < 2) throw new Error('Pedido no encontrado');
+    const ids = pedidos.getRange(2, 1, lastRow - 1, 1).getValues().flat();
+    const rowIndex = ids.indexOf(id);
+    if (rowIndex === -1) throw new Error('Pedido no encontrado');
+    const row = rowIndex + 2;
+    pedidos.getRange(row, 8).setValue(Number(montoCobrado));
+    pedidos.getRange(row, 9).setValue('Completado');
+    pedidos.getRange(row, 10).setValue(new Date());
+    return true;
+  });
 }
 
 function reabrirPedido(id) {
-  const { pedidos } = ensureSheets();
-  const lastRow = pedidos.getLastRow();
-  const ids = pedidos.getRange(2, 1, lastRow - 1, 1).getValues().flat();
-  const rowIndex = ids.indexOf(id);
-  if (rowIndex === -1) throw new Error('Pedido no encontrado');
-  const row = rowIndex + 2;
-  pedidos.getRange(row, 8).setValue('');
-  pedidos.getRange(row, 9).setValue('Pendiente');
-  pedidos.getRange(row, 10).setValue('');
-  return true;
+  return withLock(() => {
+    const { pedidos } = ensureSheets();
+    const lastRow = pedidos.getLastRow();
+    const ids = pedidos.getRange(2, 1, lastRow - 1, 1).getValues().flat();
+    const rowIndex = ids.indexOf(id);
+    if (rowIndex === -1) throw new Error('Pedido no encontrado');
+    const row = rowIndex + 2;
+    pedidos.getRange(row, 8).setValue('');
+    pedidos.getRange(row, 9).setValue('Pendiente');
+    pedidos.getRange(row, 10).setValue('');
+    return true;
+  });
 }
 
+/**
+ * Borra el pedido. No hace falta "devolver" tamales al inventario a mano:
+ * getInventarioSemana calcula "vendido" sumando el detalle de los pedidos
+ * vivos de esa semana, así que al desaparecer la fila el disponible se
+ * recalcula solo en la siguiente lectura.
+ */
 function eliminarPedido(id) {
-  const { pedidos } = ensureSheets();
-  const lastRow = pedidos.getLastRow();
-  if (lastRow < 2) return false;
-  const ids = pedidos.getRange(2, 1, lastRow - 1, 1).getValues().flat();
-  const rowIndex = ids.indexOf(id);
-  if (rowIndex === -1) return false;
-  pedidos.deleteRow(rowIndex + 2);
-  return true;
+  return withLock(() => {
+    const { pedidos } = ensureSheets();
+    const lastRow = pedidos.getLastRow();
+    if (lastRow < 2) return false;
+    const ids = pedidos.getRange(2, 1, lastRow - 1, 1).getValues().flat();
+    const rowIndex = ids.indexOf(id);
+    if (rowIndex === -1) return false;
+    pedidos.deleteRow(rowIndex + 2);
+    return true;
+  });
 }
 
 /* ---------------------- INVENTARIO ---------------------- */
@@ -357,25 +477,27 @@ function getInventarioSemana(semana) {
 
 /** items: [{tipo, cantidad}] — cantidad inicial de esa semana por tipo */
 function guardarInventario(semana, items) {
-  const { inventario } = ensureSheets();
-  const lastRow = inventario.getLastRow();
-  const data = lastRow >= 2 ? inventario.getRange(2, 1, lastRow - 1, 3).getValues() : [];
+  return withLock(() => {
+    const { inventario } = ensureSheets();
+    const lastRow = inventario.getLastRow();
+    const data = lastRow >= 2 ? inventario.getRange(2, 1, lastRow - 1, 3).getValues() : [];
 
-  (items || []).forEach(item => {
-    let found = false;
-    for (let i = 0; i < data.length; i++) {
-      if (data[i][0] === semana && data[i][1] === item.tipo) {
-        inventario.getRange(i + 2, 3).setValue(Number(item.cantidad));
-        found = true;
-        break;
+    (items || []).forEach(item => {
+      let found = false;
+      for (let i = 0; i < data.length; i++) {
+        if (data[i][0] === semana && data[i][1] === item.tipo) {
+          inventario.getRange(i + 2, 3).setValue(Number(item.cantidad));
+          found = true;
+          break;
+        }
       }
-    }
-    if (!found) {
-      inventario.appendRow([semana, item.tipo, Number(item.cantidad)]);
-    }
-  });
+      if (!found) {
+        inventario.appendRow([semana, item.tipo, Number(item.cantidad)]);
+      }
+    });
 
-  return getInventarioSemana(semana);
+    return getInventarioSemana(semana);
+  });
 }
 
 /* ---------------------- CIERRES DE SEMANA (inversión / utilidad) ---------------------- */
@@ -391,6 +513,64 @@ function leerCierres() {
 }
 
 function guardarInversion(semana, inversion) {
+  return withLock(() => {
+    const { cierres } = ensureSheets();
+    const lastRow = cierres.getLastRow();
+    const data = lastRow >= 2 ? cierres.getRange(2, 1, lastRow - 1, 3).getValues() : [];
+    let found = false;
+    for (let i = 0; i < data.length; i++) {
+      if (data[i][0] === semana) {
+        cierres.getRange(i + 2, 2).setValue(Number(inversion));
+        cierres.getRange(i + 2, 3).setValue(new Date());
+        found = true;
+        break;
+      }
+    }
+    if (!found) cierres.appendRow([semana, Number(inversion), new Date()]);
+    return obtenerResumenSemanal().find(s => s.semana === semana);
+  });
+}
+
+function cerrarSemana(semana, inversion) {
+  return withLock(() => {
+    const semanaActual = semana || getSemanaActualContext();
+    const semanaSiguiente = getSemanaSiguiente(semanaActual);
+
+    if (inversion != null && inversion !== '') {
+      guardarInversionSinLock(semanaActual, Number(inversion));
+    }
+
+    const { tipos } = getConfig();
+    const { inventario } = ensureSheets();
+    const lastRow = inventario.getLastRow();
+    const data = lastRow >= 2 ? inventario.getRange(2, 1, lastRow - 1, 3).getValues() : [];
+
+    tipos.forEach(tipo => {
+      let found = false;
+      for (let i = 0; i < data.length; i++) {
+        if (data[i][0] === semanaSiguiente && data[i][1] === tipo) {
+          inventario.getRange(i + 2, 3).setValue(0);
+          found = true;
+          break;
+        }
+      }
+      if (!found) {
+        inventario.appendRow([semanaSiguiente, tipo, 0]);
+      }
+    });
+
+    guardarSemanaActiva(semanaSiguiente);
+    return {
+      semanaCerrada: semanaActual,
+      semanaNueva: semanaSiguiente,
+      inventario: getInventarioSemana(semanaSiguiente)
+    };
+  });
+}
+
+/** Misma lógica que guardarInversion pero sin volver a pedir el lock
+ *  (para usarse dentro de cerrarSemana, que ya lo tiene tomado). */
+function guardarInversionSinLock(semana, inversion) {
   const { cierres } = ensureSheets();
   const lastRow = cierres.getLastRow();
   const data = lastRow >= 2 ? cierres.getRange(2, 1, lastRow - 1, 3).getValues() : [];
@@ -404,42 +584,6 @@ function guardarInversion(semana, inversion) {
     }
   }
   if (!found) cierres.appendRow([semana, Number(inversion), new Date()]);
-  return obtenerResumenSemanal().find(s => s.semana === semana);
-}
-
-function cerrarSemana(semana, inversion) {
-  const semanaActual = semana || getSemanaActualContext();
-  const semanaSiguiente = getSemanaSiguiente(semanaActual);
-
-  if (inversion != null && inversion !== '') {
-    guardarInversion(semanaActual, Number(inversion));
-  }
-
-  const { tipos } = getConfig();
-  const { inventario } = ensureSheets();
-  const lastRow = inventario.getLastRow();
-  const data = lastRow >= 2 ? inventario.getRange(2, 1, lastRow - 1, 3).getValues() : [];
-
-  tipos.forEach(tipo => {
-    let found = false;
-    for (let i = 0; i < data.length; i++) {
-      if (data[i][0] === semanaSiguiente && data[i][1] === tipo) {
-        inventario.getRange(i + 2, 3).setValue(0);
-        found = true;
-        break;
-      }
-    }
-    if (!found) {
-      inventario.appendRow([semanaSiguiente, tipo, 0]);
-    }
-  });
-
-  guardarSemanaActiva(semanaSiguiente);
-  return {
-    semanaCerrada: semanaActual,
-    semanaNueva: semanaSiguiente,
-    inventario: getInventarioSemana(semanaSiguiente)
-  };
 }
 
 function obtenerResumenSemanal() {

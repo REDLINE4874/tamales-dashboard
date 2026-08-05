@@ -85,6 +85,14 @@ input, select{ font-family:'Inter',sans-serif; }
   padding-top:16px; border-top:1px dashed var(--linea); font-size:14px; font-weight:600; }
 .total-amount{ font-size:20px; color:var(--hoja); }
 
+/* ---------- BANNER DE EDICIÓN ---------- */
+.edit-banner{
+  display:flex; justify-content:space-between; align-items:center; gap:12px;
+  background:rgba(227,167,43,.15); border:1px solid rgba(227,167,43,.45);
+  border-radius:10px; padding:10px 14px; margin-bottom:14px; font-size:13px;
+}
+.edit-banner strong{ color:var(--hoja); }
+
 /* ---------- TICKETS (pedidos activos) ---------- */
 .tickets-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(230px,1fr)); gap:22px; }
 .empty-state{ color:var(--carbon-60); font-size:14px; padding:30px 0; }
@@ -115,6 +123,15 @@ input, select{ font-family:'Inter',sans-serif; }
 .ticket-complete-btn{ background:var(--hoja); color:var(--masa); font-size:12px; font-weight:600;
   padding:7px 12px; border-radius:7px; }
 .ticket-complete-btn:hover{ background:#152b21; }
+
+.ticket-actions{ display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
+.ticket-actions .ticket-complete-btn{ flex:1.4; }
+.ticket-edit-btn, .ticket-delete-btn{
+  flex:1; font-size:12px; font-weight:600; padding:7px 10px; border-radius:7px;
+  background:transparent; border:1px solid var(--linea); color:var(--carbon); transition:.15s;
+}
+.ticket-edit-btn:hover{ border-color:var(--hoja); color:var(--hoja); background:rgba(31,58,46,.06); }
+.ticket-delete-btn:hover{ border-color:var(--chile); color:var(--chile); background:rgba(178,58,46,.06); }
 
 /* ---------- DASHBOARD ---------- */
 .stats-row{ display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:20px; }
@@ -236,6 +253,12 @@ input, select{ font-family:'Inter',sans-serif; }
   .modal { width: 95%; max-width: 340px; padding: 20px; }
   .modal-actions { flex-direction: column; }
   .modal-actions button { width: 100%; min-height: 44px; }
+
+  /* Acciones de ticket en columna y con buen tamaño táctil en móvil */
+  .ticket-actions { flex-direction: column; }
+  .ticket-edit-btn, .ticket-delete-btn, .ticket-actions .ticket-complete-btn { min-height: 44px; }
+
+  .edit-banner { flex-direction: column; align-items: flex-start; gap: 8px; }
 }
 
 
