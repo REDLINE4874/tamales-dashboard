@@ -36,6 +36,8 @@ Copia la URL que termina en `/exec` — esa es tu URL de implementación.
 
 > Cada vez que cambies `Codigo.gs`: `npm run push` y luego `clasp deploy` de nuevo (o `clasp deploy -i <deploymentId>` para actualizar la misma implementación en vez de crear una nueva URL — revisa `npm run deployments`).
 
+(si te marca un error de logeo usa este comando npx clasp login)
+
 ## 2. Conectar la página web
 
 En `web/config.js`:
