@@ -51,6 +51,24 @@ function withLock(fn) {
 
 /* ---------------------- ENRUTADOR ---------------------- */
 
+// Acciones que escriben datos: en vez de devolver solo su resultado puntual,
+// el router les pega abajo el dashboard completo ya actualizado. Así el
+// frontend puede refrescar toda la UI con la MISMA respuesta del POST, sin
+// tener que hacer una segunda petición completa (que es lo que más tiempo
+// de espera agregaba, porque cada llamada a Apps Script/JSONP ya es lenta
+// de por sí).
+const WRITE_ACTIONS = {
+  crearPedido: true,
+  editarPedido: true,
+  completarPedido: true,
+  reabrirPedido: true,
+  eliminarPedido: true,
+  guardarConfig: true,
+  guardarInventario: true,
+  guardarInversion: true,
+  cerrarSemana: true
+};
+
 function doGet(e) {
   const p = (e && e.parameter) || {};
   const action = p.action || 'dashboard';
@@ -99,6 +117,12 @@ function doGet(e) {
         break;
       default:
         throw new Error('Acción no reconocida: ' + action);
+    }
+    // Para acciones de escritura, sustituimos el resultado puntual por el
+    // dashboard completo (misma forma que devuelve la acción "dashboard"),
+    // para que el front no tenga que volver a pedirlo por separado.
+    if (WRITE_ACTIONS[action]) {
+      data = getDashboardData();
     }
     response = { ok: true, data };
   } catch (err) {

@@ -172,6 +172,27 @@ function onError(err) {
   alert("Ocurrió un error: " + (err && err.message ? err.message : err));
 }
 
+/**
+ * Envía una acción de escritura (crear/editar/eliminar pedido, guardar
+ * inventario, etc.) y refresca la UI con la MISMA respuesta del POST, en
+ * vez de hacer una segunda petición completa a "dashboard". El backend ya
+ * devuelve el dashboard actualizado en cada acción de escritura, así que
+ * esto le ahorra al usuario una ida y vuelta entera al servidor (que en
+ * Apps Script/JSONP es lo que más tarda).
+ */
+async function postAndSync(action, payload) {
+  setConnStatus("Sincronizando…");
+  try {
+    const data = await apiPost(action, payload);
+    onDataLoaded(data);
+    setConnStatus("Conectado", "ok");
+    return data;
+  } catch (err) {
+    setConnStatus("Sin conexión con la API", "error");
+    throw err;
+  }
+}
+
 /* ==========================================================
    NUEVO PEDIDO / EDICIÓN DE PEDIDO
    ========================================================== */
@@ -332,7 +353,7 @@ async function guardarPedido() {
 
   try {
     if (editingPedidoId) {
-      await apiPost("editarPedido", { id: editingPedidoId, cliente, items });
+      await postAndSync("editarPedido", { id: editingPedidoId, cliente, items });
     } else {
       // Id único por intento: úsalo en Apps Script (LockService + caché) para
       // descartar una segunda ejecución si el mismo request llega duplicado.
@@ -340,10 +361,9 @@ async function guardarPedido() {
         window.crypto && crypto.randomUUID
           ? crypto.randomUUID()
           : `${Date.now()}_${Math.random().toString(36).slice(2)}`;
-      await apiPost("crearPedido", { cliente, items, clientRequestId });
+      await postAndSync("crearPedido", { cliente, items, clientRequestId });
     }
     cancelarEdicion();
-    await cargarTodo();
     document.querySelector('.nav-item[data-view="activos"]').click();
   } catch (err) {
     onError(err);
@@ -444,9 +464,8 @@ async function eliminarPedido(id) {
   if (!confirmar) return;
 
   try {
-    await apiPost("eliminarPedido", { id });
+    await postAndSync("eliminarPedido", { id });
     if (editingPedidoId === id) cancelarEdicion();
-    await cargarTodo();
   } catch (err) {
     onError(err);
   }
@@ -501,8 +520,7 @@ async function guardarInventario() {
   btn.disabled = true;
   btn.textContent = "Guardando…";
   try {
-    await apiPost("guardarInventario", { semana: STATE.semanaActual, items });
-    await cargarTodo();
+    await postAndSync("guardarInventario", { semana: STATE.semanaActual, items });
   } catch (err) {
     onError(err);
   } finally {
@@ -542,12 +560,11 @@ async function confirmarCobro() {
   btn.disabled = true;
   btn.textContent = "Guardando…";
   try {
-    await apiPost("completarPedido", {
+    await postAndSync("completarPedido", {
       id: modalPedidoId,
       montoCobrado: monto,
     });
     cerrarModal();
-    await cargarTodo();
   } catch (err) {
     onError(err);
   } finally {
@@ -591,24 +608,58 @@ function drawChart() {
     ]),
   );
 
+  const isMobile = window.innerWidth < 480;
+  const fontSize = isMobile ? 10 : 12;
+
   const options = {
     backgroundColor: "transparent",
     legend: { position: "none" },
     colors: ["#E3A72B"],
     chartArea: {
-      left: 60,
+      // Márgenes proporcionales en vez de píxeles fijos: en pantallas
+      // angostas "left: 60" dejaba las barras apretadas contra el eje.
+      left: isMobile ? "18%" : "12%",
       top: 20,
-      right: 20,
-      bottom: 40,
-      width: "100%",
-      height: "75%",
+      right: 14,
+      bottom: isMobile ? 30 : 40,
+      width: isMobile ? "78%" : "85%",
+      height: isMobile ? "68%" : "75%",
     },
-    hAxis: { textStyle: { color: "#2B2118", fontName: "Inter" } },
-    vAxis: { textStyle: { color: "#2B2118", fontName: "Inter" }, format: "$#" },
+    hAxis: {
+      textStyle: { color: "#2B2118", fontName: "Inter", fontSize },
+    },
+    vAxis: {
+      textStyle: { color: "#2B2118", fontName: "Inter", fontSize },
+      format: "$#",
+    },
     bar: { groupWidth: "55%" },
   };
   new google.visualization.ColumnChart(el).draw(dataTable, options);
 }
+
+// El contenedor de "Ganancias" está oculto (display:none) hasta que el
+// usuario entra a esa pestaña. Si el gráfico se dibuja mientras está
+// oculto, Google Charts lo mide con ancho 0 y queda deformado. Por eso
+// lo volvemos a dibujar cada vez que se activa la pestaña, y al cambiar
+// el tamaño de la ventana (p. ej. al rotar el celular).
+document.addEventListener("DOMContentLoaded", () => {
+  document
+    .querySelector('.nav-item[data-view="dashboard"]')
+    ?.addEventListener("click", () => {
+      if (chartsReady && STATE.resumenSemanal.length) drawChart();
+    });
+});
+
+let resizeTimer = null;
+window.addEventListener("resize", () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => {
+    const view = document.getElementById("view-dashboard");
+    if (chartsReady && view?.classList.contains("active") && STATE.resumenSemanal.length) {
+      drawChart();
+    }
+  }, 200);
+});
 
 /* ---------------- Cierre de la semana actual (widget en Ganancias) ---------------- */
 
@@ -654,8 +705,7 @@ async function registrarInversion(semana, refId) {
     return;
   }
   try {
-    await apiPost("guardarInversion", { semana, inversion });
-    await cargarTodo();
+    await postAndSync("guardarInversion", { semana, inversion });
   } catch (err) {
     onError(err);
   }
@@ -673,8 +723,7 @@ async function cerrarSemanaActual() {
   );
   if (!confirmar) return;
   try {
-    await apiPost("cerrarSemana", { semana: STATE.semanaActual, inversion });
-    await cargarTodo();
+    await postAndSync("cerrarSemana", { semana: STATE.semanaActual, inversion });
   } catch (err) {
     onError(err);
   }

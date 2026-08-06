@@ -259,6 +259,26 @@ input, select{ font-family:'Inter',sans-serif; }
   .ticket-edit-btn, .ticket-delete-btn, .ticket-actions .ticket-complete-btn { min-height: 44px; }
 
   .edit-banner { flex-direction: column; align-items: flex-start; gap: 8px; }
+
+  /* ---------- GANANCIAS (dashboard) en móvil ---------- */
+  .stat-card { padding: 14px 16px; }
+  .stat-value { font-size: 21px; }
+
+  .chart-card { min-height: 240px; padding: 16px 10px; }
+  #chartGanancias { height: 220px; }
+
+  .invest-card { padding: 18px 16px; }
+  .invest-summary { flex-direction: column; gap: 8px; }
+  .invest-form { flex-direction: column; align-items: stretch; }
+  .invest-form .invest-input { min-width: 0; min-height: 44px; }
+  .invest-actions button,
+  .invest-form button { width: 100%; min-height: 44px; }
+}
+
+@media (max-width: 400px) {
+  .stat-value { font-size: 19px; }
+  .chart-card { min-height: 210px; }
+  #chartGanancias { height: 190px; }
 }
 
 
