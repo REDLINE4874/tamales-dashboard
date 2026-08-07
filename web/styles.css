@@ -26,8 +26,8 @@ input, select{ font-family:'Inter',sans-serif; }
 
 /* ---------- SIDEBAR ---------- */
 .sidebar{ width:230px; flex-shrink:0; background:var(--hoja); color:var(--masa);
-  display:flex; flex-direction:column; padding:24px 16px;  }
-.brand{ display:flex; align-items:center; gap:10px; padding:0 8px 20px; }
+  display:flex; flex-direction:column; padding:24px 16px;}
+.brand{ display:flex; align-items:center; gap:10px; padding:0 8px 15px; }
 .brand-mark{ font-size:28px; }
 .brand-name{ font-family:'Fraunces',serif; font-size:16px; line-height:1.25; font-weight:600; }
 .brand-name small{ font-family:'Inter',sans-serif; font-weight:400; opacity:.65; font-size:11px; text-transform:uppercase; letter-spacing:.08em; }
