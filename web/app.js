@@ -71,7 +71,7 @@ function apiPost(action, payload = {}) {
    ========================================================== */
 
 let STATE = {
-  config: { precio: 0, tipos: [] },
+  config: { tipos: [] }, // tipos: [{ tipo, precio }, ...]
   pendientes: [],
   completados: [],
   resumenSemanal: [],
@@ -102,6 +102,7 @@ document.addEventListener("DOMContentLoaded", () => {
   document
     .getElementById("guardarInventarioBtn")
     .addEventListener("click", guardarInventario);
+  setupConfig();
   cargarTodo();
 });
 
@@ -156,7 +157,7 @@ function onDataLoaded(data) {
   document.getElementById("dashboardSemanaLabel").textContent =
     data.semanaActualLabel.toLowerCase();
 
-  if (!document.querySelector(".item-row")) addItemRow();
+  if (!document.querySelector("#itemsList .item-row")) addItemRow();
   else refreshItemRowOptions();
 
   renderPedidosActivos();
@@ -164,6 +165,7 @@ function onDataLoaded(data) {
   renderDashboardStats();
   renderInvestCurrent();
   renderHistorico();
+  renderConfig();
   if (chartsReady) drawChart();
 }
 
@@ -246,8 +248,14 @@ function addItemRow(presetTipo, presetCantidad) {
 
 function optionsHTML() {
   return (STATE.config.tipos || [])
-    .map((t) => `<option value="${t}">${t}</option>`)
+    .map((t) => `<option value="${escapeHtml(t.tipo)}">${escapeHtml(t.tipo)}</option>`)
     .join("");
+}
+
+/** Precio de un tipo de tamal según Config. 0 si el tipo ya no existe. */
+function precioDeTipo(tipo) {
+  const t = (STATE.config.tipos || []).find((x) => x.tipo === tipo);
+  return t ? Number(t.precio) || 0 : 0;
 }
 
 function refreshItemRowOptions() {
@@ -266,12 +274,14 @@ function refreshItemRowOptions() {
  *  reservadas, para no marcar falso excedente sobre sí mismo. */
 function refreshFormState() {
   let cantidadTotal = 0;
+  let total = 0;
   let hayExcedente = false;
 
-  document.querySelectorAll(".item-row").forEach((row) => {
+  document.querySelectorAll("#itemsList .item-row").forEach((row) => {
     const tipo = row.querySelector(".item-tipo").value;
     const cantidad = Number(row.querySelector(".item-cant").value || 0);
     cantidadTotal += cantidad;
+    total += cantidad * precioDeTipo(tipo);
 
     const hint = row.querySelector(".item-hint");
     const inv = (STATE.inventario || []).find((i) => i.tipo === tipo);
@@ -297,7 +307,6 @@ function refreshFormState() {
     }
   });
 
-  const total = cantidadTotal * (STATE.config.precio || 0);
   document.getElementById("totalEstimado").textContent = "$" + total.toFixed(0);
 
   const warning = document.getElementById("pedidoWarning");
@@ -334,7 +343,7 @@ async function guardarPedido() {
   }
 
   const items = [];
-  document.querySelectorAll(".item-row").forEach((r) => {
+  document.querySelectorAll("#itemsList .item-row").forEach((r) => {
     const tipo = r.querySelector(".item-tipo").value;
     const cantidad = Number(r.querySelector(".item-cant").value || 0);
     if (cantidad > 0) items.push({ tipo, cantidad });
@@ -800,6 +809,101 @@ function renderHistorico() {
 
 function toggleWeek(i) {
   document.getElementById("week-detail-" + i).classList.toggle("open");
+}
+
+/* ==========================================================
+   TIPOS Y PRECIOS (Config)
+   ========================================================== */
+
+function setupConfig() {
+  document.getElementById("addTipoBtn").addEventListener("click", () => {
+    addTipoRow("", "");
+  });
+  document
+    .getElementById("guardarConfigBtn")
+    .addEventListener("click", guardarConfigTipos);
+}
+
+function addTipoRow(tipo, precio) {
+  const list = document.getElementById("tiposList");
+  const row = document.createElement("div");
+  row.className = "tipo-row";
+  row.innerHTML = `
+    <div class="item-row-main">
+      <input type="text" class="tipo-nombre" placeholder="Nombre del tipo" value="${escapeHtml(tipo || "")}">
+      <input type="number" class="tipo-precio" min="0" step="0.01" placeholder="Precio" value="${precio !== "" && precio != null ? precio : ""}">
+      <button type="button" class="remove-item">✕</button>
+    </div>
+  `;
+  row.querySelector(".remove-item").addEventListener("click", () => row.remove());
+  list.appendChild(row);
+}
+
+/** Vuelve a dibujar la lista de tipos/precios a partir de STATE.config. */
+function renderConfig() {
+  const list = document.getElementById("tiposList");
+  list.innerHTML = "";
+  const tipos = STATE.config.tipos || [];
+  if (!tipos.length) {
+    addTipoRow("", "");
+  } else {
+    tipos.forEach((t) => addTipoRow(t.tipo, t.precio));
+  }
+}
+
+async function guardarConfigTipos() {
+  const warning = document.getElementById("configWarning");
+  warning.hidden = true;
+
+  const tipos = [];
+  const nombres = new Set();
+  let error = "";
+
+  document.querySelectorAll("#tiposList .tipo-row").forEach((row) => {
+    const tipo = row.querySelector(".tipo-nombre").value.trim();
+    const precioVal = row.querySelector(".tipo-precio").value;
+    if (!tipo && precioVal === "") return; // renglón vacío, se ignora
+
+    if (!tipo) {
+      error = "Todos los tipos necesitan un nombre.";
+      return;
+    }
+    if (nombres.has(tipo)) {
+      error = `El tipo "${tipo}" está repetido.`;
+      return;
+    }
+    nombres.add(tipo);
+
+    const precio = Number(precioVal);
+    if (precioVal === "" || isNaN(precio) || precio < 0) {
+      error = `Escribe un precio válido para "${tipo}".`;
+      return;
+    }
+    tipos.push({ tipo, precio });
+  });
+
+  if (error) {
+    warning.hidden = false;
+    warning.textContent = error;
+    return;
+  }
+  if (!tipos.length) {
+    warning.hidden = false;
+    warning.textContent = "Agrega al menos un tipo de tamal.";
+    return;
+  }
+
+  const btn = document.getElementById("guardarConfigBtn");
+  btn.disabled = true;
+  btn.textContent = "Guardando…";
+  try {
+    await postAndSync("guardarConfig", { tipos });
+  } catch (err) {
+    onError(err);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Guardar cambios";
+  }
 }
 
 function escapeHtml(str) {

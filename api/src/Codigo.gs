@@ -104,7 +104,7 @@ function doGet(e) {
         data = eliminarPedido(p.id);
         break;
       case 'guardarConfig':
-        data = guardarConfig(Number(p.precio), JSON.parse(p.tipos || '[]'));
+        data = guardarConfig(JSON.parse(p.tipos || '[]'));
         break;
       case 'guardarInventario':
         data = guardarInventario(p.semana, JSON.parse(p.items || '[]'));
@@ -161,16 +161,23 @@ function ensureSheets() {
     pedidos.setFrozenRows(1);
   }
 
+  // Config: cada tipo de tamal tiene su propio precio (columna A = tipo,
+  // columna B = precio). Antes había un único precio global en B1 para
+  // todos los tipos; ahora el precio vive junto a cada tipo, a partir de
+  // la fila 4, igual que antes vivían los tipos solos.
   let config = ss.getSheetByName(SHEET_CONFIG);
   if (!config) {
     config = ss.insertSheet(SHEET_CONFIG);
-    config.getRange('A1').setValue('Precio por tamal');
-    config.getRange('B1').setValue(15);
-    config.getRange('A3').setValue('Tipos de tamal');
+    config.getRange('A3').setValue('Tipo');
+    config.getRange('B3').setValue('Precio');
     config.getRange('A4').setValue('Verde');
+    config.getRange('B4').setValue(15);
     config.getRange('A5').setValue('Rojo');
+    config.getRange('B5').setValue(15);
     config.getRange('A6').setValue('Dulce');
+    config.getRange('B6').setValue(15);
     config.getRange('A7').setValue('Rajas con queso');
+    config.getRange('B7').setValue(15);
   }
 
   let inventario = ss.getSheetByName(SHEET_INVENTARIO);
@@ -215,24 +222,48 @@ function getWeekLabel(weekKey) {
 
 /* ---------------------- CONFIG ---------------------- */
 
+/**
+ * Lee la hoja Config y devuelve { tipos: [{tipo, precio}, ...] }.
+ * Por compatibilidad con hojas creadas antes de que existiera precio por
+ * tipo, si un renglón no tiene precio en la columna B, se usa el viejo
+ * precio único que vivía en B1 (si existe) como respaldo, en vez de
+ * dejarlo en 0 silenciosamente.
+ */
 function getConfig() {
   const { config } = ensureSheets();
-  const precio = config.getRange('B1').getValue();
+  const precioLegado = Number(config.getRange('B1').getValue()) || 0;
   const lastRow = config.getLastRow();
   let tipos = [];
   if (lastRow >= 4) {
-    tipos = config.getRange(4, 1, lastRow - 3, 1).getValues().flat().filter(String);
+    const rows = config.getRange(4, 1, lastRow - 3, 2).getValues();
+    tipos = rows
+      .filter(r => String(r[0]).trim())
+      .map(r => ({
+        tipo: String(r[0]).trim(),
+        precio: r[1] !== '' && r[1] != null ? Number(r[1]) : precioLegado
+      }));
   }
-  return { precio: Number(precio) || 0, tipos };
+  return { tipos };
 }
 
-function guardarConfig(precio, tipos) {
+/** tipos: [{tipo, precio}, ...] — reemplaza toda la lista de tipos y precios. */
+function guardarConfig(tipos) {
   const { config } = ensureSheets();
-  config.getRange('B1').setValue(precio);
   const lastRow = config.getLastRow();
-  if (lastRow >= 4) config.getRange(4, 1, lastRow - 3, 1).clearContent();
-  (tipos || []).forEach((t, i) => config.getRange(4 + i, 1).setValue(t));
+  if (lastRow >= 4) config.getRange(4, 1, lastRow - 3, 2).clearContent();
+  (tipos || []).forEach((t, i) => {
+    config.getRange(4 + i, 1).setValue(String(t.tipo || '').trim());
+    config.getRange(4 + i, 2).setValue(Number(t.precio) || 0);
+  });
   return getConfig();
+}
+
+/** Mapa rápido { tipo: precio } para calcular montos de pedidos. */
+function getPrecioMap() {
+  const { tipos } = getConfig();
+  const map = {};
+  tipos.forEach(t => { map[t.tipo] = t.precio; });
+  return map;
 }
 
 function getSemanaActiva() {
@@ -305,9 +336,11 @@ function crearPedido(cliente, items, clientRequestId) {
     });
 
     const { pedidos } = ensureSheets();
-    const { precio } = getConfig();
+    const precios = getPrecioMap();
     const cantidadTotal = items.reduce((s, i) => s + Number(i.cantidad || 0), 0);
-    const montoEsperado = cantidadTotal * precio;
+    const montoEsperado = items.reduce(
+      (s, i) => s + Number(i.cantidad || 0) * (precios[i.tipo] || 0), 0
+    );
     const id = Utilities.getUuid();
 
     pedidos.appendRow([
@@ -376,9 +409,11 @@ function editarPedido(id, cliente, items) {
       }
     });
 
-    const { precio } = getConfig();
+    const precios = getPrecioMap();
     const cantidadTotal = items.reduce((s, i) => s + Number(i.cantidad || 0), 0);
-    const montoEsperado = cantidadTotal * precio;
+    const montoEsperado = items.reduce(
+      (s, i) => s + Number(i.cantidad || 0) * (precios[i.tipo] || 0), 0
+    );
 
     pedidos.getRange(row, 4).setValue(cliente);
     pedidos.getRange(row, 5).setValue(JSON.stringify(items));
@@ -490,7 +525,7 @@ function getInventarioSemana(semana) {
   const { tipos } = getConfig();
   const inicial = leerInventarioRaw(semana);
   const vendido = calcularVendidoPorTipo(semana);
-  return tipos.map(tipo => {
+  return tipos.map(({ tipo }) => {
     const configurado = Object.prototype.hasOwnProperty.call(inicial, tipo);
     const cantidadInicial = configurado ? inicial[tipo] : null;
     const v = vendido[tipo] || 0;
@@ -569,7 +604,7 @@ function cerrarSemana(semana, inversion) {
     const lastRow = inventario.getLastRow();
     const data = lastRow >= 2 ? inventario.getRange(2, 1, lastRow - 1, 3).getValues() : [];
 
-    tipos.forEach(tipo => {
+    tipos.forEach(({ tipo }) => {
       let found = false;
       for (let i = 0; i < data.length; i++) {
         if (data[i][0] === semanaSiguiente && data[i][1] === tipo) {

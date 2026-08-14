@@ -29,6 +29,7 @@
           <button class="nav-item" data-view="inventario">Inventario</button>
           <button class="nav-item" data-view="dashboard">Ganancias</button>
           <button class="nav-item" data-view="historico">Histórico</button>
+          <button class="nav-item" data-view="config">Tipos y precios</button>
         </nav>
         <div class="sidebar-foot">
           <div class="week-chip" id="currentWeekChip">Semana —</div>
@@ -169,6 +170,22 @@
             <p>Total, inversión y utilidad por semana</p>
           </header>
           <div id="historicoList"></div>
+        </section>
+
+        <!-- TIPOS Y PRECIOS -->
+        <section id="view-config" class="view">
+          <header class="view-head">
+            <h1>Tipos y precios</h1>
+            <p>Agrega, quita o renombra tipos de tamal y define el precio de cada uno.</p>
+          </header>
+          <div class="card form-card">
+            <div id="tiposList" class="items-list"></div>
+            <button type="button" class="btn-add-item" id="addTipoBtn">
+              <span class="add-icon">+</span> Agregar tipo de tamal
+            </button>
+            <div id="configWarning" class="form-warning" hidden></div>
+            <button class="btn-primary" id="guardarConfigBtn">Guardar cambios</button>
+          </div>
         </section>
       </main>
     </div>

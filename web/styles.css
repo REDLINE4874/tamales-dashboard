@@ -651,3 +651,102 @@ input, select{ font-family:'Inter',sans-serif; }
 .btn-submit-order:hover .btn-arrow {
   transform: translateX(4px);
 }
+
+/* ==========================================================
+   AVISOS DE FORMULARIO (excedente de inventario, config inválida)
+   ========================================================== */
+.form-warning {
+  background: rgba(178, 58, 46, 0.08);
+  border: 1px solid rgba(178, 58, 46, 0.3);
+  color: var(--chile);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 10px 14px;
+  border-radius: 10px;
+}
+
+/* ==========================================================
+   TIPOS Y PRECIOS (Config)
+   ========================================================== */
+.tipo-row {
+  background: #FAF5E8;
+  border: 1px solid rgba(43, 33, 24, 0.08);
+  border-radius: 12px;
+  padding: 12px 14px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.tipo-row:hover {
+  box-shadow: 0 4px 12px rgba(43, 33, 24, 0.05);
+}
+
+.tipo-row .item-row-main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Los inputs de tipo/precio viven dentro de .form-card, cuya regla general
+   (input[type=text/number]{ display:block; width:100%; margin-top:6px; })
+   los pondría en bloque y uno debajo del otro; aquí los volvemos a poner
+   en línea, lado a lado, como en .item-row. */
+.form-card .tipo-row input.tipo-nombre,
+.form-card .tipo-row input.tipo-precio {
+  width: auto;
+  margin-top: 0;
+  padding: 10px 12px;
+  border-radius: 9px;
+  border: 1px solid var(--linea);
+  background: #FFF;
+  font-size: 14px;
+  color: var(--carbon);
+}
+
+.tipo-row input.tipo-nombre {
+  flex: 1.6;
+  font-weight: 600;
+}
+
+.tipo-row input.tipo-precio {
+  flex: 0.9;
+  min-width: 0;
+  text-align: center;
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 600;
+}
+
+.tipo-row input.tipo-nombre:focus,
+.tipo-row input.tipo-precio:focus {
+  border-color: var(--elote-dark);
+  background: #FFF;
+  box-shadow: 0 0 0 3px rgba(227, 167, 43, 0.2);
+  outline: none;
+}
+
+.tipo-row .remove-item {
+  background: rgba(178, 58, 46, 0.1);
+  color: var(--chile);
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: bold;
+  border: none;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.tipo-row .remove-item:hover {
+  background: var(--chile);
+  color: #FFF;
+}
+
+@media (max-width: 720px) {
+  .tipo-row .item-row-main { flex-wrap: wrap; gap: 8px; }
+  .tipo-row input.tipo-nombre,
+  .tipo-row input.tipo-precio { flex: 2 1 50%; min-height: 44px; }
+  .tipo-row .remove-item { min-height: 44px; min-width: 44px; }
+}
