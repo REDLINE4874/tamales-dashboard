@@ -13,16 +13,14 @@ function setupConfig() {
 
 function addTipoRow(tipo, precio) {
   const list = document.getElementById("tiposList");
-  const row = document.createElement("div");
+  const row = document.createElement("tr");
   row.className = "tipo-row";
   row.innerHTML = `
-    <div class="item-row-main">
-      <input type="text" class="tipo-nombre" placeholder="Nombre del tipo" value="${escapeHtml(tipo || "")}">
-      <input type="number" class="tipo-precio" min="0" step="0.01" placeholder="Precio" value="${precio !== "" && precio != null ? precio : ""}">
-      <button type="button" class="remove-item">✕</button>
-    </div>
+    <td><input type="text" class="tipo-nombre" placeholder="Nombre del tipo" value="${escapeHtml(tipo || "")}"></td>
+    <td><label class="tipo-price-input"><span>$</span><input type="number" class="tipo-precio" min="0" step="0.01" placeholder="0.00" value="${precio !== "" && precio != null ? precio : ""}"></label></td>
+    <td><button type="button" class="item-remove-btn" aria-label="Eliminar tipo de tamal"><span aria-hidden="true"></span></button></td>
   `;
-  row.querySelector(".remove-item").addEventListener("click", () => row.remove());
+  row.querySelector(".item-remove-btn").addEventListener("click", () => row.remove());
   list.appendChild(row);
 }
 

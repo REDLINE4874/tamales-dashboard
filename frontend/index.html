@@ -42,7 +42,7 @@
         <section id="view-nuevo" class="view active">
           <header class="view-head">
             <div class="head-title-row">
-              <h1 id="formTitle">Nueva comanda</h1>
+              <h1>Realizar Pedido</h1>
             </div>
           </header>
 
@@ -72,14 +72,6 @@
 
               <!-- 2. Sección Detalle del Pedido -->
               <div class="form-group">
-                <div class="form-group-header">
-                  <span class="form-group-title"
-                    ><span class="group-icon">🫔</span> Tamales
-                    solicitados</span
-                  >
-                  <span class="form-group-sub">Selecciona tipo y cantidad</span>
-                </div>
-
                 <div id="itemsList" class="items-list"></div>
 
                 <button type="button" class="btn-add-item" id="addItemBtn">
@@ -115,6 +107,16 @@
             <h1>Pedidos activos</h1>
             <p>Marca como pagado, edita o elimina una comanda pendiente</p>
           </header>
+          <div class="stats-row order-stats">
+            <div class="stat-card">
+              <span class="stat-label">Pedidos completados</span>
+              <span class="stat-value mono" id="statCompletados">0</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-label">Pedidos pendientes</span>
+              <span class="stat-value mono" id="statPendientes">0</span>
+            </div>
+          </div>
           <div id="pedidosActivosList" class="tickets-grid"></div>
         </section>
 
@@ -143,21 +145,25 @@
             <h1>Ganancias</h1>
             <p>Resumen de <span id="dashboardSemanaLabel">esta semana</span></p>
           </header>
-          <div class="stats-row">
+          <div class="stats-row dashboard-stats">
             <div class="stat-card">
               <span class="stat-label">Esta semana</span>
               <span class="stat-value mono" id="statSemanaActual">$0</span>
             </div>
-            <div class="stat-card">
-              <span class="stat-label">Pedidos completados</span>
-              <span class="stat-value mono" id="statCompletados">0</span>
-            </div>
-            <div class="stat-card">
-              <span class="stat-label">Pedidos pendientes</span>
-              <span class="stat-value mono" id="statPendientes">0</span>
-            </div>
           </div>
           <div class="card chart-card">
+            <div class="chart-toolbar">
+              <label for="chartMonthFilter">Ver ganancias de</label>
+              <select id="chartMonthFilter" class="chart-month-select"></select>
+              <div class="chart-month-total">
+                <span id="chartMonthLabel">Total del mes</span>
+                <strong class="mono" id="chartMonthTotal">$0</strong>
+              </div>
+              <div class="chart-month-orders">
+                <span>Pedidos completados</span>
+                <strong class="mono" id="chartMonthOrders">0</strong>
+              </div>
+            </div>
             <div id="chartGanancias"></div>
           </div>
           <div class="card invest-card" id="investCardCurrent"></div>
@@ -167,8 +173,15 @@
         <section id="view-historico" class="view">
           <header class="view-head">
             <h1>Histórico de ventas</h1>
-            <p>Total, inversión y utilidad por semana</p>
+            <p>Consulta las semanas en una tabla filtrando por mes y año</p>
           </header>
+          <div class="history-filters">
+            <label for="historyMonthFilter">Mes</label>
+            <select id="historyMonthFilter" class="chart-month-select"></select>
+            <label for="historyYearFilter">Año</label>
+            <select id="historyYearFilter" class="chart-month-select"></select>
+          </div>
+          <div id="historyMonthlySummary" class="history-monthly-summary"></div>
           <div id="historicoList"></div>
         </section>
 
@@ -179,7 +192,23 @@
             <p>Agrega, quita o renombra tipos de tamal y define el precio de cada uno.</p>
           </header>
           <div class="card form-card">
-            <div id="tiposList" class="items-list"></div>
+            <div class="tipo-table-wrap">
+              <table class="tipo-table">
+                <colgroup>
+                  <col class="tipo-column-name" />
+                  <col class="tipo-column-price" />
+                  <col class="tipo-column-actions" />
+                </colgroup>
+                <thead>
+                  <tr>
+                    <th scope="col">Tipo de tamal</th>
+                    <th scope="col">Precio</th>
+                    <th scope="col">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody id="tiposList"></tbody>
+              </table>
+            </div>
             <button type="button" class="btn-add-item" id="addTipoBtn">
               <span class="add-icon">+</span> Agregar tipo de tamal
             </button>
@@ -207,8 +236,45 @@
       </div>
     </div>
 
+    <div class="loading-overlay" id="loadingOverlay" hidden aria-live="polite">
+      <div class="feedback-card loading-card">
+        <div class="loading-spinner" aria-hidden="true"></div>
+        <h2 id="loadingTitle">Procesando…</h2>
+        <p id="loadingMessage">Estamos actualizando la información.</p>
+      </div>
+    </div>
+
+    <div
+      class="dialog-overlay"
+      id="appDialogOverlay"
+      hidden
+      role="presentation"
+    >
+      <section
+        class="feedback-card app-dialog"
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="appDialogTitle"
+        aria-describedby="appDialogMessage"
+      >
+        <h2 id="appDialogTitle"></h2>
+        <p id="appDialogMessage"></p>
+        <div class="feedback-actions">
+          <button type="button" class="btn-ghost" id="appDialogCancel">
+            Cancelar
+          </button>
+          <button type="button" class="btn-primary" id="appDialogConfirm">
+            Aceptar
+          </button>
+        </div>
+      </section>
+    </div>
+
+    <div id="appToast" class="app-toast" role="status" aria-live="polite"></div>
+
     <script src="src/config.js"></script>
     <script src="src/js/api.js"></script>
+    <script src="src/js/controles.js"></script>
     <script src="src/js/app.js"></script>
     <script src="src/js/pedidos.js"></script>
     <script src="src/js/inventario.js"></script>

@@ -1,5 +1,13 @@
 /* ---------- DASHBOARD ---------- */
-.stats-row{ display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:20px; }
+.stats-row{ display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:16px; margin-bottom:20px; }
+.order-stats{
+  position:sticky;
+  top:8px;
+  z-index:8;
+  padding:8px 0;
+  background:var(--masa);
+}
+.dashboard-stats .stat-card{ max-width:300px; }
 .stat-card{ background:var(--papel); border-radius:var(--radius); padding:18px 20px;
   box-shadow:0 1px 2px rgba(43,33,24,.05); }
 .stat-label{ display:block; font-size:12px; color:var(--carbon-60); font-weight:600;
@@ -7,20 +15,44 @@
 .stat-value{ font-size:26px; color:var(--hoja); }
 
 .chart-card{ min-height:320px; }
+.chart-toolbar{ display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+.chart-toolbar label{ font-size:13px; font-weight:600; color:var(--carbon-60); }
+.chart-month-select{ padding:8px 10px; border:1px solid var(--linea); border-radius:8px;
+  background:var(--masa); color:var(--carbon); font:500 13px 'Inter',sans-serif; }
+.chart-month-total{ display:flex; flex-direction:column; align-items:flex-end; gap:2px; margin-left:auto; }
+.chart-month-total span{ font-size:11px; color:var(--carbon-60); }
+.chart-month-total strong{ color:var(--hoja); font-size:17px; }
+.chart-month-orders{ display:flex; flex-direction:column; align-items:flex-end; gap:2px; }
+.chart-month-orders span{ font-size:11px; color:var(--carbon-60); }
+.chart-month-orders strong{ color:var(--hoja); font-size:17px; }
 #chartGanancias{ width:100%; height:300px; }
 
 /* ---------- HISTORICO ---------- */
-.week-block{ margin-bottom:16px; border-radius:var(--radius); background:var(--papel);
-  box-shadow:0 1px 2px rgba(43,33,24,.05); overflow:hidden; }
-.week-summary{ display:flex; justify-content:space-between; align-items:center; padding:16px 20px;
-  cursor:pointer; }
-.week-summary:hover{ background:rgba(227,167,43,.08); }
-.week-title{ font-family:'Fraunces',serif; font-size:16px; font-weight:600; }
-.week-meta{ font-size:12px; color:var(--carbon-60); margin-top:2px; }
-.week-total{ font-size:18px; color:var(--hoja); }
-
-.week-detail{ display:none; padding:0 20px 16px; border-top:1px solid var(--linea); }
-.week-detail.open{ display:block; }
+.history-filters{ display:flex; align-items:center; gap:10px; margin-bottom:16px; }
+.history-filters label{ font-size:13px; font-weight:600; color:var(--carbon-60); }
+.history-filters select{ min-width:120px; text-transform:capitalize; }
+.history-monthly-summary{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:16px; margin-bottom:16px; }
+.history-monthly-card{ display:flex; flex-direction:column; gap:6px; padding:16px 20px;
+  border-radius:var(--radius); background:var(--papel); box-shadow:0 1px 2px rgba(43,33,24,.05); }
+.history-monthly-card .stat-value{ font-size:23px; }
+.history-monthly-card .stat-value.pos{ color:var(--hoja); }
+.history-monthly-card .stat-value.neg{ color:var(--chile); }
+.history-monthly-note{ color:var(--carbon-60); font-size:12px; }
+.history-table-wrap{ overflow-x:auto; border-radius:var(--radius); background:var(--papel);
+  box-shadow:0 1px 2px rgba(43,33,24,.05); }
+.history-table{ width:100%; border-collapse:collapse; text-align:left; }
+.history-table th,.history-table td{ padding:13px 16px; border-bottom:1px solid var(--linea); }
+.history-table thead{ background:var(--hoja); color:var(--masa); font-size:12px;
+  text-transform:uppercase; letter-spacing:.04em; }
+.history-table tbody tr:not(.history-detail-row):hover{ background:rgba(227,167,43,.08); }
+.history-table tbody th{ font-weight:600; white-space:nowrap; }
+.history-table tbody td{ font-size:13px; }
+.history-table .history-detail-toggle{ padding:6px 10px; white-space:nowrap; }
+.history-detail-row{ display:none; background:rgba(243,233,199,.35); }
+.history-detail-row.open{ display:table-row; }
+.history-detail-row td{ padding:0 16px 14px; }
+.history-week-detail{ padding:14px 4px 0; }
 .pedido-row{ display:flex; justify-content:space-between; padding:9px 0; font-size:13px;
   border-bottom:1px dashed var(--linea); }
 .pedido-row:last-child{ border-bottom:none; }
@@ -39,4 +71,3 @@
   border:1px solid var(--linea); background:var(--masa); font-size:15px; }
 .modal-actions{ display:flex; gap:8px; }
 .modal-actions button{ flex:1; padding:10px; border-radius:8px; font-size:13px; font-weight:600; }
-

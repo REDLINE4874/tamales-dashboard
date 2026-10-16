@@ -52,7 +52,11 @@ async function guardarInventario() {
     }
   });
   if (cantidadNoEntera) {
-    alert("La cantidad de inventario debe ser un número entero igual o mayor que cero.");
+    await showAppDialog({
+      title: "Cantidad de inventario inválida",
+      message: "Usa números enteros iguales o mayores que cero para guardar el inventario.",
+      confirmText: "Entendido",
+    });
     return;
   }
   const btn = document.getElementById("guardarInventarioBtn");

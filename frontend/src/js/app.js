@@ -17,6 +17,8 @@ let chartsReady = false;
 let creatingPedido = false;
 let editingPedidoId = null;
 let editingOriginalItems = null; // detalle original del pedido que se está editando
+let appDialogResolver = null;
+let toastTimer = null;
 
 google.charts.load("current", { packages: ["corechart"] });
 google.charts.setOnLoadCallback(() => {
@@ -29,6 +31,7 @@ document.addEventListener("DOMContentLoaded", () => {
     setConnStatus("Falta configurar API_URL en config.js", "error");
   }
   setupNav();
+  setupAppDialog();
   setupForm();
   setupModal();
   document
@@ -62,6 +65,7 @@ function setupNav() {
 }
 
 async function cargarTodo() {
+  showLoading("Conectando con tu negocio…", "Cargando pedidos e inventario.");
   try {
     setConnStatus("Sincronizando…");
     const data = await apiGet("dashboard");
@@ -70,6 +74,8 @@ async function cargarTodo() {
   } catch (err) {
     onError(err);
     setConnStatus("Sin conexión con la API", "error");
+  } finally {
+    hideLoading();
   }
 }
 
@@ -95,6 +101,7 @@ function onDataLoaded(data) {
   renderPedidosActivos();
   renderInventario();
   renderDashboardStats();
+  renderChartMonthFilter();
   renderInvestCurrent();
   renderHistorico();
   renderConfig();
@@ -103,7 +110,94 @@ function onDataLoaded(data) {
 
 function onError(err) {
   console.error(err);
-  alert("Ocurrió un error: " + (err && err.message ? err.message : err));
+  return showAppDialog({
+    title: "No se pudo completar",
+    message: err && err.message ? err.message : String(err),
+    confirmText: "Entendido",
+  });
+}
+
+function setupAppDialog() {
+  document
+    .getElementById("appDialogConfirm")
+    .addEventListener("click", () => closeAppDialog(true));
+  document
+    .getElementById("appDialogCancel")
+    .addEventListener("click", () => closeAppDialog(false));
+  document
+    .getElementById("appDialogOverlay")
+    .addEventListener("keydown", (event) => {
+      if (event.key === "Escape") closeAppDialog(false);
+    });
+}
+
+function showAppDialog({
+  title,
+  message,
+  confirmText = "Aceptar",
+  cancelText = "Cancelar",
+  showCancel = false,
+  danger = false,
+}) {
+  if (appDialogResolver) closeAppDialog(false);
+
+  document.getElementById("appDialogTitle").textContent = title;
+  document.getElementById("appDialogMessage").textContent = message;
+  const cancelButton = document.getElementById("appDialogCancel");
+  cancelButton.textContent = cancelText;
+  cancelButton.hidden = !showCancel;
+
+  const confirmButton = document.getElementById("appDialogConfirm");
+  confirmButton.textContent = confirmText;
+  confirmButton.classList.toggle("btn-danger", danger);
+
+  const overlay = document.getElementById("appDialogOverlay");
+  overlay.hidden = false;
+  requestAnimationFrame(() => confirmButton.focus());
+
+  return new Promise((resolve) => {
+    appDialogResolver = resolve;
+  });
+}
+
+function closeAppDialog(confirmed) {
+  if (!appDialogResolver) return;
+  document.getElementById("appDialogOverlay").hidden = true;
+  const resolve = appDialogResolver;
+  appDialogResolver = null;
+  resolve(confirmed);
+}
+
+function showLoading(title, message) {
+  document.getElementById("loadingTitle").textContent = title;
+  document.getElementById("loadingMessage").textContent = message;
+  document.getElementById("loadingOverlay").hidden = false;
+}
+
+function hideLoading() {
+  document.getElementById("loadingOverlay").hidden = true;
+}
+
+function showToast(message) {
+  const toast = document.getElementById("appToast");
+  toast.textContent = message;
+  toast.classList.add("visible");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.remove("visible"), 3500);
+}
+
+function actionFeedback(action) {
+  const messages = {
+    crearPedido: ["Creando el pedido…", "Guardando la comanda y reservando el inventario.", "Pedido creado y guardado."],
+    editarPedido: ["Guardando cambios…", "Actualizando el pedido y revisando el inventario.", "Cambios del pedido guardados."],
+    completarPedido: ["Registrando el pago…", "Actualizando el estado y las ganancias.", "Pago registrado correctamente."],
+    eliminarPedido: ["Eliminando pedido…", "Actualizando el inventario disponible.", "Pedido eliminado."],
+    guardarInventario: ["Guardando inventario…", "Actualizando las cantidades disponibles.", "Inventario guardado."],
+    guardarInversion: ["Guardando inversión…", "Actualizando el cierre de la semana.", "Inversión guardada."],
+    cerrarSemana: ["Cerrando la semana…", "Guardando el cierre y preparando la siguiente semana.", "Semana cerrada correctamente."],
+    guardarConfig: ["Guardando configuración…", "Actualizando los tipos y precios.", "Configuración guardada."],
+  };
+  return messages[action] || ["Guardando…", "Actualizando la información.", "Cambios guardados."];
 }
 
 /**
@@ -115,15 +209,19 @@ function onError(err) {
  * Apps Script/JSONP es lo que más tarda).
  */
 async function postAndSync(action, payload) {
+  const [loadingTitle, loadingMessage, successMessage] = actionFeedback(action);
+  showLoading(loadingTitle, loadingMessage);
   setConnStatus("Sincronizando…");
   try {
     const data = await apiPost(action, payload);
     onDataLoaded(data);
     setConnStatus("Conectado", "ok");
+    showToast(successMessage);
     return data;
   } catch (err) {
     setConnStatus("Sin conexión con la API", "error");
     throw err;
+  } finally {
+    hideLoading();
   }
 }
-

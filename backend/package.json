@@ -11,7 +11,7 @@
     "watch": "clasp push --watch",
     "open": "clasp open",
     "open:webapp": "clasp open --webapp",
-    "deploy": "clasp deploy",
+    "deploy": "node scripts/deploy.js",
     "deployments": "clasp deployments"
   },
   "devDependencies": {

@@ -32,6 +32,7 @@
   background:rgba(227,167,43,.15); border:1px solid rgba(227,167,43,.45);
   border-radius:10px; padding:10px 14px; margin-bottom:14px; font-size:13px;
 }
+.edit-banner[hidden]{ display:none; }
 .edit-banner strong{ color:var(--hoja); }
 
 /* ---------- TICKETS (pedidos activos) ---------- */
@@ -73,4 +74,3 @@
 }
 .ticket-edit-btn:hover{ border-color:var(--hoja); color:var(--hoja); background:rgba(31,58,46,.06); }
 .ticket-delete-btn:hover{ border-color:var(--chile); color:var(--chile); background:rgba(178,58,46,.06); }
-

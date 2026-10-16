@@ -259,8 +259,8 @@ function guardarConfig(tipos) {
 }
 
 /** Mapa rápido { tipo: precio } para calcular montos de pedidos. */
-function getPrecioMap() {
-  const { tipos } = getConfig();
+function getPrecioMap(config) {
+  const { tipos } = config || getConfig();
   const map = {};
   tipos.forEach(t => { map[t.tipo] = t.precio; });
   return map;
@@ -323,7 +323,8 @@ function crearPedido(cliente, items, clientRequestId) {
     const semana = getSemanaActualContext();
 
     // Validar contra inventario configurado para esta semana
-    const inventarioActual = getInventarioSemana(semana);
+    const config = getConfig();
+    const inventarioActual = getInventarioSemana(semana, undefined, config);
     const invPorTipo = {};
     inventarioActual.forEach(i => { invPorTipo[i.tipo] = i; });
 
@@ -337,7 +338,7 @@ function crearPedido(cliente, items, clientRequestId) {
     });
 
     const { pedidos } = ensureSheets();
-    const precios = getPrecioMap();
+    const precios = getPrecioMap(config);
     const cantidadTotal = items.reduce((s, i) => s + Number(i.cantidad || 0), 0);
     const montoEsperado = items.reduce(
       (s, i) => s + Number(i.cantidad || 0) * (precios[i.tipo] || 0), 0
@@ -395,7 +396,8 @@ function editarPedido(id, cliente, items) {
       reservadoOriginal[d.tipo] = (reservadoOriginal[d.tipo] || 0) + Number(d.cantidad);
     });
 
-    const inventarioActual = getInventarioSemana(semana);
+    const config = getConfig();
+    const inventarioActual = getInventarioSemana(semana, undefined, config);
     const invPorTipo = {};
     inventarioActual.forEach(i => { invPorTipo[i.tipo] = i; });
 
@@ -411,7 +413,7 @@ function editarPedido(id, cliente, items) {
       }
     });
 
-    const precios = getPrecioMap();
+    const precios = getPrecioMap(config);
     const cantidadTotal = items.reduce((s, i) => s + Number(i.cantidad || 0), 0);
     const montoEsperado = items.reduce(
       (s, i) => s + Number(i.cantidad || 0) * (precios[i.tipo] || 0), 0
@@ -519,11 +521,26 @@ function leerInventarioRaw(semana) {
   return map;
 }
 
-function calcularVendidoPorTipo(semana) {
-  const pedidosSemana = listarPedidos(null).filter(p => p.semana === semana);
+function calcularVendidoPorTipo(semana, pedidos) {
   const map = {};
-  pedidosSemana.forEach(p => {
-    p.detalle.forEach(d => { map[d.tipo] = (map[d.tipo] || 0) + Number(d.cantidad); });
+  if (pedidos !== undefined) {
+    pedidos
+      .filter(p => p.semana === semana)
+      .forEach(p => p.detalle.forEach(d => {
+        map[d.tipo] = (map[d.tipo] || 0) + Number(d.cantidad);
+      }));
+    return map;
+  }
+
+  const { pedidos: sheet } = ensureSheets();
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2) return map;
+  const data = sheet.getRange(2, 3, lastRow - 1, 3).getValues();
+  data.forEach(row => {
+    if (row[0] !== semana) return;
+    JSON.parse(row[2] || '[]').forEach(d => {
+      map[d.tipo] = (map[d.tipo] || 0) + Number(d.cantidad);
+    });
   });
   return map;
 }
@@ -532,10 +549,10 @@ function calcularVendidoPorTipo(semana) {
  *  ha comprometido en pedidos de esa semana, y cuánto queda disponible.
  *  Si nunca se configuró inventario para un tipo esa semana, disponible = null
  *  (sin límite). */
-function getInventarioSemana(semana) {
-  const { tipos } = getConfig();
+function getInventarioSemana(semana, pedidos, config) {
+  const { tipos } = config || getConfig();
   const inicial = leerInventarioRaw(semana);
-  const vendido = calcularVendidoPorTipo(semana);
+  const vendido = calcularVendidoPorTipo(semana, pedidos);
   return tipos.map(({ tipo }) => {
     const configurado = Object.prototype.hasOwnProperty.call(inicial, tipo);
     const cantidadInicial = configurado ? inicial[tipo] : null;
@@ -663,8 +680,10 @@ function guardarInversionSinLock(semana, inversion) {
   if (!found) cierres.appendRow([semana, Number(inversion), new Date()]);
 }
 
-function obtenerResumenSemanal() {
-  const completados = listarPedidos('Completado');
+function obtenerResumenSemanal(pedidos) {
+  const completados = pedidos === undefined
+    ? listarPedidos('Completado')
+    : pedidos.filter(p => p.estado === 'Completado');
   const map = {};
   completados.forEach(p => {
     if (!map[p.semana]) map[p.semana] = { semana: p.semana, total: 0, pedidos: 0 };
@@ -695,13 +714,14 @@ function obtenerResumenSemanal() {
 function getDashboardData() {
   const todos = listarPedidos(null);
   const semanaActual = getSemanaActualContext();
+  const config = getConfig();
   return {
     todos,
     completados: todos.filter(p => p.estado === 'Completado'),
     pendientes: todos.filter(p => p.estado === 'Pendiente'),
-    resumenSemanal: obtenerResumenSemanal(),
-    config: getConfig(),
-    inventario: getInventarioSemana(semanaActual),
+    resumenSemanal: obtenerResumenSemanal(todos),
+    config,
+    inventario: getInventarioSemana(semanaActual, todos, config),
     semanaActual,
     semanaActualLabel: getWeekLabel(semanaActual)
   };

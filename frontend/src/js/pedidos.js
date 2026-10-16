@@ -9,15 +9,21 @@ function addItemRow(presetTipo, presetCantidad) {
 
   row.innerHTML = `
     <div class="item-row-main">
-      <select class="item-tipo">${optionsHTML()}</select>
-      <div class="cant-control">
-        <button type="button" class="btn-minus">−</button>
-        <input type="number" class="item-cant" min="1" step="1" value="${presetCantidad || 1}" placeholder="Cant.">
-        <button type="button" class="btn-plus">+</button>
+      <div class="item-type-group">
+        <select class="item-tipo" aria-label="Tipo de tamal">${optionsHTML()}</select>
+        <div class="item-hint"></div>
       </div>
-      <button type="button" class="remove-item">✕</button>
+      <div class="item-row-actions">
+        <div class="cant-control">
+          <button type="button" class="btn-minus">−</button>
+          <input type="number" class="item-cant" min="1" step="1" value="${presetCantidad || 1}" placeholder="Cant.">
+          <button type="button" class="btn-plus">+</button>
+        </div>
+        <button type="button" class="item-remove-btn" aria-label="Quitar tamal">
+          <span aria-hidden="true"></span>
+        </button>
+      </div>
     </div>
-    <div class="item-hint"></div>
   `;
 
   if (presetTipo) {
@@ -27,7 +33,7 @@ function addItemRow(presetTipo, presetCantidad) {
     }
   }
 
-  row.querySelector(".remove-item").addEventListener("click", () => {
+  row.querySelector(".item-remove-btn").addEventListener("click", () => {
     row.remove();
     refreshFormState();
   });
@@ -36,16 +42,17 @@ function addItemRow(presetTipo, presetCantidad) {
   row.querySelector(".item-tipo").addEventListener("change", refreshFormState);
 
   row.querySelector(".btn-minus").addEventListener("click", () => {
-    input.value = Math.max(1, Number(input.value) - 1);
+    input.value = Math.max(1, Math.round(Number(input.value) || 0) - 1);
     refreshFormState();
   });
 
   row.querySelector(".btn-plus").addEventListener("click", () => {
-    input.value = Number(input.value) + 1;
+    input.value = Math.max(1, Math.round(Number(input.value) || 0) + 1);
     refreshFormState();
   });
 
   list.appendChild(row);
+  enhanceCustomSelect(row.querySelector(".item-tipo"));
   refreshFormState();
 }
 
@@ -66,6 +73,7 @@ function refreshItemRowOptions() {
     const current = sel.value;
     sel.innerHTML = optionsHTML();
     if ([...sel.options].some((o) => o.value === current)) sel.value = current;
+    refreshCustomSelect(sel);
   });
   refreshFormState();
 }
@@ -79,33 +87,53 @@ function refreshFormState() {
   let cantidadTotal = 0;
   let total = 0;
   let hayExcedente = false;
+  let hayCantidadNoEntera = false;
+  const rows = [...document.querySelectorAll("#itemsList .item-row")];
+  const cantidadPorTipo = new Map();
+  const disponiblePorTipo = new Map();
 
-  document.querySelectorAll("#itemsList .item-row").forEach((row) => {
+  rows.forEach((row) => {
     const tipo = row.querySelector(".item-tipo").value;
-    const cantidad = Number(row.querySelector(".item-cant").value || 0);
+    const cantidadInput = row.querySelector(".item-cant").value;
+    const cantidad = Number(cantidadInput || 0);
     cantidadTotal += cantidad;
     total += cantidad * precioDeTipo(tipo);
 
-    const hint = row.querySelector(".item-hint");
-    const inv = (STATE.inventario || []).find((i) => i.tipo === tipo);
+    if (cantidadInput !== "" && !Number.isInteger(cantidad)) {
+      hayCantidadNoEntera = true;
+    }
+    cantidadPorTipo.set(tipo, (cantidadPorTipo.get(tipo) || 0) + cantidad);
+  });
 
-    let disponibleAjustado = inv ? inv.disponible : 0;
-    if (editingOriginalItems && inv && inv.configurado) {
-      const reservadoOriginal = editingOriginalItems
-        .filter((d) => d.tipo === tipo)
-        .reduce((sum, d) => sum + d.cantidad, 0);
-      disponibleAjustado = inv.disponible + reservadoOriginal;
+  rows.forEach((row) => {
+    const tipo = row.querySelector(".item-tipo").value;
+    const hint = row.querySelector(".item-hint");
+    const inv = (STATE.inventario || []).find((item) => item.tipo === tipo);
+    if (!inv || !inv.configurado) {
+      hint.textContent = "Disponibles: sin límite";
+      hint.className = "item-hint";
+      return;
     }
 
-    if (!inv || !inv.configurado) {
-      hint.textContent = "Sin límite configurado";
-      hint.className = "item-hint";
-    } else if (cantidad > disponibleAjustado) {
-      hint.textContent = `Solo quedan ${disponibleAjustado} disponibles de ${tipo}`;
+    if (!disponiblePorTipo.has(tipo)) {
+      const reservadoOriginal = (editingOriginalItems || [])
+        .filter((item) => item.tipo === tipo)
+        .reduce((sum, item) => sum + Number(item.cantidad || 0), 0);
+      disponiblePorTipo.set(
+        tipo,
+        Number(inv.disponible || 0) + reservadoOriginal,
+      );
+    }
+
+    const disponible = disponiblePorTipo.get(tipo);
+    const solicitado = cantidadPorTipo.get(tipo) || 0;
+    const restante = Math.max(disponible - solicitado, 0);
+    if (solicitado > disponible) {
+      hint.textContent = `Disponibles: ${restante}`;
       hint.className = "item-hint item-hint-error";
       hayExcedente = true;
     } else {
-      hint.textContent = `Disponible: ${disponibleAjustado}`;
+      hint.textContent = `Disponibles: ${restante}`;
       hint.className = "item-hint";
     }
   });
@@ -114,7 +142,11 @@ function refreshFormState() {
 
   const warning = document.getElementById("pedidoWarning");
   const btn = document.getElementById("crearPedidoBtn");
-  if (hayExcedente) {
+  if (hayCantidadNoEntera) {
+    warning.hidden = false;
+    warning.textContent = "La cantidad de cada tamal debe ser un número entero.";
+    btn.disabled = true;
+  } else if (hayExcedente) {
     warning.hidden = false;
     warning.textContent =
       "Ajusta las cantidades: no hay suficiente inventario para completar este pedido.";
@@ -141,7 +173,11 @@ async function guardarPedido() {
 
   const cliente = document.getElementById("clienteInput").value.trim();
   if (!cliente) {
-    alert("Escribe el nombre del cliente");
+    await showAppDialog({
+      title: "Falta el nombre del cliente",
+      message: "Escribe el nombre para poder crear la comanda.",
+      confirmText: "Entendido",
+    });
     return;
   }
 
@@ -158,11 +194,19 @@ async function guardarPedido() {
     if (cantidad > 0) items.push({ tipo, cantidad });
   });
   if (cantidadNoEntera) {
-    alert("La cantidad de cada tamal debe ser un número entero.");
+    await showAppDialog({
+      title: "Revisa las cantidades",
+      message: "La cantidad de cada tamal debe ser un número entero.",
+      confirmText: "Entendido",
+    });
     return;
   }
   if (!items.length) {
-    alert("Agrega al menos un tamal");
+    await showAppDialog({
+      title: "Pedido sin tamales",
+      message: "Agrega al menos un tamal antes de guardar la comanda.",
+      confirmText: "Entendido",
+    });
     return;
   }
 
@@ -185,7 +229,7 @@ async function guardarPedido() {
           : `${Date.now()}_${Math.random().toString(36).slice(2)}`;
       await postAndSync("crearPedido", { cliente, items, clientRequestId });
     }
-    cancelarEdicion();
+    restablecerFormularioPedido();
     document.querySelector('.nav-item[data-view="activos"]').click();
   } catch (err) {
     onError(err);
@@ -212,7 +256,6 @@ function abrirEdicionPedido(id) {
   document.getElementById("itemsList").innerHTML = "";
   pedido.detalle.forEach((d) => addItemRow(d.tipo, d.cantidad));
 
-  document.getElementById("formTitle").textContent = "Editar comanda";
   document.getElementById("crearPedidoBtn").querySelector("span").textContent =
     "Guardar cambios";
   document.getElementById("editBannerCliente").textContent = pedido.cliente;
@@ -224,14 +267,20 @@ function abrirEdicionPedido(id) {
 
 /** Sale del modo edición y deja el formulario listo para un pedido nuevo. */
 function cancelarEdicion() {
+  if (!editingPedidoId) return;
+  restablecerFormularioPedido();
+  showToast("Edición cancelada. El pedido original no fue modificado.");
+}
+
+function restablecerFormularioPedido() {
   editingPedidoId = null;
   editingOriginalItems = null;
 
   document.getElementById("clienteInput").value = "";
   document.getElementById("itemsList").innerHTML = "";
+  document.getElementById("editBannerCliente").textContent = "";
   addItemRow();
 
-  document.getElementById("formTitle").textContent = "Nueva comanda";
   document.getElementById("crearPedidoBtn").querySelector("span").textContent =
     "Crear comanda";
   document.getElementById("editBanner").hidden = true;
@@ -280,14 +329,18 @@ function renderPedidosActivos() {
 async function eliminarPedido(id) {
   const pedido = STATE.pendientes.find((p) => p.id === id);
   const nombre = pedido ? pedido.cliente : "este pedido";
-  const confirmar = window.confirm(
-    `¿Eliminar la comanda de ${nombre}? Los tamales regresarán al inventario disponible.`,
-  );
+  const confirmar = await showAppDialog({
+    title: "Eliminar comanda",
+    message: `¿Quieres eliminar la comanda de ${nombre}? Los tamales volverán al inventario disponible.`,
+    confirmText: "Sí, eliminar",
+    showCancel: true,
+    danger: true,
+  });
   if (!confirmar) return;
 
   try {
     await postAndSync("eliminarPedido", { id });
-    if (editingPedidoId === id) cancelarEdicion();
+    if (editingPedidoId === id) restablecerFormularioPedido();
   } catch (err) {
     onError(err);
   }
