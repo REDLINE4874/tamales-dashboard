@@ -1,0 +1,33 @@
+/* ---------- SIDEBAR ---------- */
+.sidebar{ width:230px; flex-shrink:0; background:var(--hoja); color:var(--masa);
+  display:flex; flex-direction:column; padding:24px 16px;}
+.brand{ display:flex; align-items:center; gap:10px; padding:0 8px 15px; }
+.brand-mark{ font-size:28px; }
+.brand-name{ font-family:'Fraunces',serif; font-size:16px; line-height:1.25; font-weight:600; }
+.brand-name small{ font-family:'Inter',sans-serif; font-weight:400; opacity:.65; font-size:11px; text-transform:uppercase; letter-spacing:.08em; }
+
+.nav{ display:flex; flex-direction:column; gap:4px; }
+.nav-item{ background:transparent; color:rgba(243,233,199,.75); text-align:left;
+  padding:11px 12px; border-radius:9px; font-size:14px; font-weight:500; transition:.15s; }
+.nav-item:hover{ background:rgba(243,233,199,.08); color:var(--masa); }
+.nav-item.active{ background:var(--elote); color:var(--hoja); font-weight:600; }
+
+.sidebar-foot{ margin-top:auto; padding-top:16px; }
+.week-chip{ font-family:'IBM Plex Mono',monospace; font-size:11px; color:rgba(243,233,199,.55);
+  border-top:1px dashed rgba(243,233,199,.2); padding-top:12px; }
+.conn-status{ font-size:11px; margin-top:8px; color:rgba(243,233,199,.55); }
+.conn-status.ok{ color:#8fd0a8; }
+.conn-status.error{ color:#e79a90; }
+
+/* ---------- CONTENT ---------- */
+.content{ flex:1; padding:36px 40px; max-width:960px; }
+.view{ display:none; }
+.view.active{ display:block; animation:fade .25s ease; }
+@keyframes fade{ from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:none;} }
+
+.view-head{ margin-bottom:24px; }
+.view-head p{ margin:4px 0 0; color:var(--carbon-60); font-size:14px; }
+
+.card{ background:var(--papel); border-radius:var(--radius); padding:22px;
+  box-shadow: 0 1px 2px rgba(43,33,24,.06), 0 8px 24px rgba(43,33,24,.05); }
+

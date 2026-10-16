@@ -2,6 +2,6 @@ services:
   - type: web
     name: tamales-dashboard
     runtime: static
-    rootDir: web
+    rootDir: frontend
     buildCommand: ""
     staticPublishPath: .

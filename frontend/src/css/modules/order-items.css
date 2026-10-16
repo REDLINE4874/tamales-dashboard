@@ -1,0 +1,88 @@
+/* Tarjeta individual por cada fila de Tamal en la lista */
+.item-row {
+  background: #FAF5E8;
+  border: 1px solid rgba(43, 33, 24, 0.08);
+  border-radius: 12px;
+  padding: 12px 14px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.item-row:hover {
+  box-shadow: 0 4px 12px rgba(43, 33, 24, 0.05);
+}
+
+.item-row-main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.item-row select.item-tipo {
+  flex: 1;
+  padding: 10px 12px;
+  border-radius: 9px;
+  border: 1px solid var(--linea);
+  background: #FFF;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--carbon);
+  cursor: pointer;
+}
+
+/* Botón de eliminar (Cruz estilo Badge circular) */
+.item-row .remove-item {
+  background: rgba(178, 58, 46, 0.1);
+  color: var(--chile);
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: bold;
+  transition: all 0.15s ease;
+  border: none;
+}
+
+.item-row .remove-item:hover {
+  background: var(--chile);
+  color: #FFF;
+}
+
+/* Avisos/hints debajo de cada tamal */
+.item-hint {
+  font-size: 11.5px;
+  margin-top: 6px;
+}
+
+/* Botón flotante/punteado "+ Agregar otro tamal" */
+.btn-add-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px;
+  background: rgba(227, 167, 43, 0.08);
+  border: 2px dashed rgba(227, 167, 43, 0.4);
+  color: var(--carbon);
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 4px;
+}
+
+.btn-add-item:hover {
+  background: rgba(227, 167, 43, 0.18);
+  border-color: var(--elote-dark);
+}
+
+.add-icon {
+  font-size: 18px;
+  font-weight: bold;
+  color: var(--elote-dark);
+}
+

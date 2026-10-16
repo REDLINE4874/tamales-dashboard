@@ -1,0 +1,26 @@
+/* ==========================================================
+   OPTIMIZACIONES DE RENDIMIENTO (Dispositivos Lentos)
+   ========================================================== */
+.view {
+  /* Permite al navegador omitir el renderizado de vistas ocultas, 
+     ahorrando muchísima memoria y CPU */
+  content-visibility: auto;
+}
+
+.view.active {
+  /* Activa la aceleración por hardware (GPU) para animaciones más fluidas */
+  will-change: transform, opacity;
+}
+
+.nav {
+  /* Desplazamiento suave nativo en dispositivos móviles antiguos */
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Evitar transiciones costosas en botones si el dispositivo es muy lento */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

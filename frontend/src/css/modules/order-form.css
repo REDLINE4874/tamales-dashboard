@@ -1,0 +1,88 @@
+/* ==========================================================
+   REDISEÑO VISUAL: CREAR COMANDA (PUNTO DE VENTA)
+   ========================================================== */
+
+/* Contenedor general centrado */
+.form-container {
+  max-width: 620px;
+  margin: 0 auto;
+}
+
+/* Encabezado con badge */
+.head-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.head-badge {
+  background: rgba(31, 58, 46, 0.1);
+  color: var(--hoja);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+
+/* Tarjeta Principal */
+.form-card {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  border: 1px solid rgba(43, 33, 24, 0.08);
+  box-shadow: 0 12px 32px rgba(43, 33, 24, 0.06);
+}
+
+/* Títulos de sección internos */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.form-group-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.form-group-title {
+  font-family: 'Fraunces', serif;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--carbon);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.group-icon {
+  font-size: 18px;
+}
+
+.form-group-sub {
+  font-size: 12px;
+  color: var(--carbon-60);
+}
+
+/* Input del Cliente estilizado */
+.input-wrapper input {
+  width: 100%;
+  padding: 12px 14px;
+  font-size: 15px;
+  border: 1.5px solid var(--linea);
+  border-radius: 11px;
+  background: var(--masa);
+  color: var(--carbon);
+  transition: all 0.2s ease;
+}
+
+.input-wrapper input:focus {
+  border-color: var(--elote-dark);
+  background: #FFF;
+  box-shadow: 0 0 0 3px rgba(227, 167, 43, 0.2);
+  outline: none;
+}
+

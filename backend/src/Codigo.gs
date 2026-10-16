@@ -308,6 +308,7 @@ function getSemanaSiguiente(semana) {
 function crearPedido(cliente, items, clientRequestId) {
   if (!cliente) throw new Error('Falta el nombre del cliente');
   if (!items || !items.length) throw new Error('El pedido no tiene tamales');
+  validarCantidadesPedido(items);
 
   return withLock(() => {
     const cache = CacheService.getScriptCache();
@@ -370,6 +371,7 @@ function editarPedido(id, cliente, items) {
   if (!id) throw new Error('Falta el id del pedido');
   if (!cliente) throw new Error('Falta el nombre del cliente');
   if (!items || !items.length) throw new Error('El pedido no tiene tamales');
+  validarCantidadesPedido(items);
 
   return withLock(() => {
     const { pedidos } = ensureSheets();
@@ -421,6 +423,15 @@ function editarPedido(id, cliente, items) {
     pedidos.getRange(row, 7).setValue(montoEsperado);
 
     return { id, montoEsperado, semana };
+  });
+}
+
+function validarCantidadesPedido(items) {
+  items.forEach(item => {
+    const cantidad = Number(item.cantidad);
+    if (!Number.isInteger(cantidad) || cantidad < 1) {
+      throw new Error('La cantidad de cada tamal debe ser un número entero mayor que cero');
+    }
   });
 }
 
@@ -536,6 +547,13 @@ function getInventarioSemana(semana) {
 
 /** items: [{tipo, cantidad}] — cantidad inicial de esa semana por tipo */
 function guardarInventario(semana, items) {
+  (items || []).forEach(item => {
+    const cantidad = Number(item.cantidad);
+    if (!Number.isInteger(cantidad) || cantidad < 0) {
+      throw new Error('La cantidad de inventario debe ser un número entero igual o mayor que cero');
+    }
+  });
+
   return withLock(() => {
     const { inventario } = ensureSheets();
     const lastRow = inventario.getLastRow();

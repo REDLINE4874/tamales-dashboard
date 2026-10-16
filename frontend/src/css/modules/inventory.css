@@ -1,0 +1,80 @@
+/* ---------- INVENTARIO ---------- */
+.inventario-list{ display:flex; flex-direction:column; gap:18px; margin-bottom:18px; }
+.inv-row{ padding-bottom:16px; border-bottom:1px dashed var(--linea); }
+.inv-row:last-child{ border-bottom:none; padding-bottom:0; }
+.inv-row-top{ display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+.inv-tipo{ font-family:'Fraunces',serif; font-size:15px; font-weight:600; }
+.inv-vendido{ font-size:12px; color:var(--carbon-60); }
+.inv-row-main{ display:flex; align-items:center; gap:12px; }
+.inv-input{ width:140px; padding:9px 10px; border-radius:8px; border:1px solid var(--linea);
+  background:var(--masa); font-size:14px; }
+.inv-disponible{ font-size:13px; color:var(--hoja); font-weight:600; }
+.inv-disponible.inv-agotado{ color:var(--chile); }
+.inv-bar{ height:6px; border-radius:4px; background:var(--linea); margin-top:10px; overflow:hidden; }
+.inv-bar-fill{ height:100%; background:var(--elote); border-radius:4px; transition:width .2s; }
+
+/* ---------- CIERRE DE SEMANA (inversión / utilidad) ---------- */
+.invest-card{ margin-top:16px; }
+.invest-card h3{ font-size:16px; margin-bottom:10px; }
+.invest-hint{ font-size:13px; color:var(--carbon-60); margin:0 0 14px; }
+.invest-summary{ display:flex; flex-wrap:wrap; gap:18px; font-size:13px; color:var(--carbon-60); }
+.invest-summary strong{ font-size:15px; color:var(--carbon); }
+.utilidad{ }
+.utilidad strong.mono{ color:inherit; }
+.utilidad.pos{ color:var(--hoja); }
+.utilidad.neg{ color:var(--chile); }
+.invest-form{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+.invest-actions{ display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
+.invest-form .invest-input{ flex:1; min-width:160px; padding:9px 10px; border-radius:8px;
+  border:1px solid var(--linea); background:var(--masa); font-size:14px; }
+
+.week-invest{ padding:14px 0; border-bottom:1px dashed var(--linea); margin-bottom:6px; }
+.week-summary-right{ display:flex; flex-direction:column; align-items:flex-end; gap:4px; }
+.utilidad-pill{ font-size:11px; font-weight:700; padding:2px 9px; border-radius:20px;
+  text-transform:uppercase; letter-spacing:.03em; }
+.utilidad-pill.pos{ color:var(--hoja); background:rgba(31,58,46,.1); }
+.utilidad-pill.neg{ color:var(--chile); background:rgba(178,58,46,.1); }
+.utilidad-pill.pending{ color:var(--carbon-60); background:rgba(43,33,24,.06); }
+/* ---------- CONTROLES DE CANTIDAD (+ / -) ---------- */
+.cant-control {
+  display: flex;
+  align-items: center;
+  background: var(--masa);
+  border: 1px solid var(--linea);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.cant-control button {
+  background: transparent;
+  color: var(--hoja);
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  min-width: 44px; /* Área táctil amigable para móviles */
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+
+.cant-control button:active { 
+  background: rgba(43,33,24,0.1); 
+}
+
+.cant-control input {
+  width: 40px !important;
+  text-align: center;
+  border: none !important; /* Quita los bordes para que luzca integrado */
+  border-radius: 0 !important;
+  padding: 10px 0 !important;
+  -moz-appearance: textfield;
+}
+
+/* Ocultar las flechas nativas del input numérico */
+.cant-control input::-webkit-outer-spin-button,
+.cant-control input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}

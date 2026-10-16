@@ -1,0 +1,26 @@
+:root{
+  --hoja: #1F3A2E;      /* verde hoja de tamal, casi negro */
+  --hoja-2: #294a3a;
+  --masa: #F3E9C7;      /* masa de maíz, fondo principal */
+  --papel: #FFFDF7;     /* ticket / tarjeta */
+  --elote: #E3A72B;     /* acento primario */
+  --elote-dark:#c78e1c;
+  --chile: #B23A2E;     /* alerta / pendiente */
+  --carbon: #2B2118;    /* texto */
+  --carbon-60: rgba(43,33,24,.6);
+  --linea: rgba(43,33,24,.14);
+  --radius: 14px;
+}
+
+*{ box-sizing:border-box; }
+html,body{ margin:0; padding:0; background:var(--masa); color:var(--carbon);
+  font-family:'Inter',sans-serif; -webkit-font-smoothing:antialiased; }
+
+h1,h2,h3{ font-family:'Fraunces',serif; font-weight:600; margin:0; letter-spacing:-.01em; }
+.mono{ font-family:'IBM Plex Mono',monospace; font-weight:600; }
+
+button{ font-family:'Inter',sans-serif; cursor:pointer; border:none; }
+input, select{ font-family:'Inter',sans-serif; }
+
+.app{ display:flex; min-height:100vh; }
+

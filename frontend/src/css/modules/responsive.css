@@ -1,0 +1,108 @@
+/* ==========================================================
+   MEJORAS RESPONSIVAS (MÓVILES: < 720px)
+   ========================================================== */
+@media (max-width: 720px) {
+  .app { flex-direction: column; }
+  
+  .sidebar { 
+    width: 100%; 
+    flex-direction: column; 
+    padding: 16px 16px 8px; 
+    position:sticky; top:0; z-index:10;
+  }
+  
+  .brand {  width: 100%; text-align: center; justify-content: center; }
+  /* ==========================================================
+     ESTADO DE CONEXIÓN EN MÓVILES
+     ========================================================== */
+  .sidebar-foot { 
+    display: flex; 
+    flex-direction: row; 
+    justify-content: space-between; 
+    align-items: center; 
+    width: 100%; 
+    padding-top: 8px; 
+    margin-top: 4px;
+    border-top: 1px dashed rgba(243,233,199,.2); 
+  }
+  
+  /* Ajustamos los elementos internos para que queden en una sola línea */
+  .week-chip { 
+    border-top: none; 
+    padding-top: 0; 
+  }
+  
+  .conn-status { 
+    margin-top: 0; 
+    font-weight: 600; /* Un poco más de grosor para que se lea mejor en pantallas pequeñas */
+  }
+  
+  /* Navegación deslizable lateralmente sin barra visible */
+  .nav { 
+    flex-direction: row; 
+    width: 100%; 
+    overflow-x: auto; 
+    white-space: nowrap;
+    padding-bottom: 8px; 
+    gap: 8px;
+    scrollbar-width: none; /* Firefox */
+  }
+  .nav::-webkit-scrollbar { display: none; /* Chrome/Safari */ }
+  
+  .nav-item { flex: 0 0 auto; text-align: center; min-height: 44px; }
+  
+  .content { padding: 16px; }
+  .stats-row { display: flex; flex-direction: column; gap: 12px; }
+  
+  .tickets-grid { grid-template-columns: 1fr; }
+  
+  /* OPTIMIZACIÓN: Quitar rotaciones e intensas sombras para ahorrar CPU */
+  .ticket {
+    transform: none !important; 
+    box-shadow: 0 2px 8px rgba(43,33,24,.08);
+  }
+  
+  /* Formulario: El selector toma toda la fila superior */
+  .item-row-main { flex-wrap: wrap; gap: 8px; }
+  .item-row select { flex: 1 1 100%; min-height: 44px; margin-bottom: 4px; }
+  .cant-control { flex: 1 1 auto; }
+  .remove-item { min-height: 44px; min-width: 44px; display: flex; align-items: center; justify-content: center; }
+
+  /* Inventario adaptable */
+  .inv-row-main { flex-wrap: wrap; gap: 8px; }
+  .inv-input { flex: 1 1 100%; min-height: 44px; }
+  .inv-row-top { flex-direction: column; align-items: flex-start; gap: 4px; }
+
+  /* Modal optimizado para pantallas estrechas */
+  .modal { width: 95%; max-width: 340px; padding: 20px; }
+  .modal-actions { flex-direction: column; }
+  .modal-actions button { width: 100%; min-height: 44px; }
+
+  /* Acciones de ticket en columna y con buen tamaño táctil en móvil */
+  .ticket-actions { flex-direction: column; }
+  .ticket-edit-btn, .ticket-delete-btn, .ticket-actions .ticket-complete-btn { min-height: 44px; }
+
+  .edit-banner { flex-direction: column; align-items: flex-start; gap: 8px; }
+
+  /* ---------- GANANCIAS (dashboard) en móvil ---------- */
+  .stat-card { padding: 14px 16px; }
+  .stat-value { font-size: 21px; }
+
+  .chart-card { min-height: 240px; padding: 16px 10px; }
+  #chartGanancias { height: 220px; }
+
+  .invest-card { padding: 18px 16px; }
+  .invest-summary { flex-direction: column; gap: 8px; }
+  .invest-form { flex-direction: column; align-items: stretch; }
+  .invest-form .invest-input { min-width: 0; min-height: 44px; }
+  .invest-actions button,
+  .invest-form button { width: 100%; min-height: 44px; }
+}
+
+@media (max-width: 400px) {
+  .stat-value { font-size: 19px; }
+  .chart-card { min-height: 210px; }
+  #chartGanancias { height: 190px; }
+}
+
+

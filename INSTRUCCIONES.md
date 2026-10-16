@@ -1,26 +1,38 @@
-# Dashboard de Tamales — API (Apps Script) + Web independiente
+# Dashboard de Tamales — frontend + backend (Apps Script)
 
-Dos proyectos separados, tal como en tus proyectos anteriores:
+El proyecto separa la interfaz web del backend de Apps Script. El código fuente
+de cada parte vive en su carpeta `src`:
 
 ```
 tamales-dashboard/
-├── api/                     ← proyecto de Apps Script (clasp), solo backend
+├── frontend/
+│   ├── index.html             ← página de entrada
+│   └── src/
+│       ├── css/
+│       │   ├── styles.css      ← punto de entrada que importa los módulos CSS
+│       │   └── modules/        ← estilos globales, vistas, formularios y responsive
+│       ├── config.js         ← aquí pegas la URL de implementación
+│       └── js/
+│           ├── api.js        ← comunicación JSONP con Apps Script
+│           ├── app.js        ← estado y arranque de la interfaz
+│           ├── pedidos.js    ← creación, edición, cobro y eliminación
+│           ├── inventario.js ← consulta y guardado del inventario
+│           ├── ganancias.js  ← dashboard, cierres e histórico
+│           └── configuracion.js ← administración de tipos y precios
+├── backend/                  ← proyecto de Apps Script (clasp)
 │   ├── src/
 │   │   ├── appsscript.json
 │   │   └── Codigo.gs        ← doGet / doPost devuelven JSON
 │   ├── package.json
-│   └── .claspignore
-└── web/                     ← página web independiente (estática)
-    ├── index.html
-    ├── styles.css
-    ├── config.js            ← aquí pegas la URL de implementación
-    └── app.js                ← usa fetch() contra esa URL
+│   ├── package-lock.json
+│   └── .clasp.json
+└── render.yaml               ← despliegue del frontend estático
 ```
 
 ## 1. Desplegar la API en Apps Script
 
 ```bash
-cd api
+cd backend
 npm install
 npx clasp login
 npx clasp create --type sheets --title "Tamales - Base de datos" --rootDir ./src
@@ -40,7 +52,7 @@ Copia la URL que termina en `/exec` — esa es tu URL de implementación.
 
 ## 2. Conectar la página web
 
-En `web/config.js`:
+En `frontend/src/config.js`:
 ```js
 const API_URL = "https://script.google.com/macros/s/XXXXXXX/exec";
 ```
@@ -49,8 +61,9 @@ Pega ahí la URL que copiaste. Nada más necesita tocarse.
 ## 3. Ejecutar la web
 
 Es HTML/CSS/JS puro, sin build. Puedes:
-- Abrir `web/index.html` directo en el navegador, o
-- Servirla con cualquier servidor estático, por ejemplo con la extensión **Live Server** de VS Code, o `npx serve web`, o desplegarla en Netlify/Vercel/GitHub Pages.
+- Abrir `frontend/index.html` directamente en el navegador, o
+- Servir la carpeta `frontend` con cualquier servidor estático, por ejemplo con la extensión **Live Server** de VS Code o `npx serve frontend`.
+- Desplegar en Render usando la configuración de `render.yaml`, o publicar la carpeta `frontend` en Netlify/Vercel/GitHub Pages.
 
 ## Cómo se comunican (JSONP, no fetch)
 
