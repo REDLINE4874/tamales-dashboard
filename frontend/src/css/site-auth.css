@@ -1,0 +1,169 @@
+/* ==========================================================
+   PANTALLA DE AUTENTICACIÓN (LOGIN) — Estilo Agendas
+   ========================================================== */
+
+body.site-auth-pending .app,
+body.site-auth-required .app {
+  display: none !important;
+}
+
+.site-auth-screen {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: var(--masa, #f3e9c7);
+}
+
+.site-auth-screen[hidden] {
+  display: none;
+}
+
+.site-auth-card {
+  width: min(100%, 400px);
+  padding: 36px 32px;
+  border: 1px solid var(--linea, rgba(43, 33, 24, 0.14));
+  border-radius: 20px;
+  background: var(--papel, #fffdf7);
+  box-shadow: 0 16px 40px rgba(43, 33, 24, 0.08);
+}
+
+.site-auth-logo {
+  display: block;
+  font-size: 48px;
+  text-align: center;
+  line-height: 1;
+  margin: 0 auto 12px;
+}
+
+.site-auth-card h1 {
+  margin: 0 0 6px;
+  color: var(--hoja, #1f3a2e);
+  text-align: center;
+  font-family: 'Fraunces', serif;
+  font-size: 26px;
+  font-weight: 700;
+}
+
+.site-auth-page-name {
+  margin: 0 0 24px;
+  color: var(--carbon-60, rgba(43, 33, 24, 0.6));
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+}
+
+.site-auth-form {
+  display: grid;
+  gap: 16px;
+}
+
+.site-auth-form label {
+  display: grid;
+  gap: 6px;
+  color: var(--carbon-60, rgba(43, 33, 24, 0.7));
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.site-auth-form input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1.5px solid var(--linea, rgba(43, 33, 24, 0.14));
+  border-radius: 10px;
+  background: var(--masa, #f3e9c7);
+  color: var(--carbon, #2b2118);
+  font: inherit;
+  font-size: 15px;
+  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+  box-sizing: border-box;
+}
+
+.site-auth-form input:focus {
+  outline: none;
+  border-color: var(--elote-dark, #c78e1c);
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(227, 167, 43, 0.2);
+}
+
+.site-auth-submit {
+  width: 100%;
+  padding: 13px 16px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--hoja, #1f3a2e);
+  color: var(--masa, #f3e9c7);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+  font-size: 15px;
+  transition: background 0.15s, transform 0.1s;
+  margin-top: 4px;
+}
+
+.site-auth-submit:hover:not(:disabled) {
+  background: var(--hoja-2, #294a3a);
+  transform: translateY(-1px);
+}
+
+.site-auth-submit:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.site-auth-link {
+  display: block;
+  margin: 16px auto 0;
+  border: 0;
+  background: none;
+  color: var(--carbon-60, rgba(43, 33, 24, 0.6));
+  cursor: pointer;
+  text-decoration: underline;
+  font: inherit;
+  font-size: 13px;
+}
+
+.site-auth-link:hover {
+  color: var(--carbon, #2b2118);
+}
+
+.site-auth-status {
+  min-height: 20px;
+  margin-top: 14px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 500;
+  color: #2b7a4b;
+}
+
+.site-auth-status.is-error {
+  color: var(--chile, #b23a2e);
+}
+
+/* Botón de Logout en el sidebar */
+.btn-logout {
+  display: block;
+  width: 100%;
+  margin-top: 10px;
+  padding: 8px 12px;
+  background: transparent;
+  border: 1px dashed rgba(243, 233, 199, 0.3);
+  border-radius: 8px;
+  color: rgba(243, 233, 199, 0.6);
+  font-size: 12px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s;
+}
+
+.btn-logout:hover {
+  border-color: rgba(243, 233, 199, 0.6);
+  color: var(--masa, #f3e9c7);
+  background: rgba(243, 233, 199, 0.08);
+}

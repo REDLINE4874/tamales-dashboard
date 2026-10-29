@@ -92,8 +92,7 @@ function onDataLoaded(data) {
     data.semanaActualLabel;
   document.getElementById("inventarioSemanaLabel").textContent =
     data.semanaActualLabel;
-  document.getElementById("dashboardSemanaLabel").textContent =
-    data.semanaActualLabel.toLowerCase();
+  const dashLabel = document.getElementById("dashboardSemanaLabel"); if (dashLabel) dashLabel.textContent = (data.semanaActualLabel || "").toLowerCase();
 
   if (!document.querySelector("#itemsList .item-row")) addItemRow();
   else refreshItemRowOptions();
