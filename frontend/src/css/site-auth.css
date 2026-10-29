@@ -36,6 +36,17 @@ body.site-auth-required .app {
   margin: 0 auto 12px;
 }
 
+.site-auth-logo .material-symbols-rounded {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  color: var(--elote, #d98932);
+  font-family: "Material Symbols Rounded";
+  font-size: 48px;
+  font-weight: 500;
+  line-height: 1;
+}
+
 .site-auth-card h1 {
   margin: 0 0 6px;
   color: var(--hoja, #1f3a2e);
