@@ -1,0 +1,20 @@
+{
+  "name": "Tamales - Panel de control",
+  "short_name": "Tamales",
+  "description": "Panel para administrar pedidos, inventario, cobros y ganancias.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f7f1e7",
+  "theme_color": "#7f2f1f",
+  "lang": "es-MX",
+  "icons": [
+    {
+      "src": "icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
