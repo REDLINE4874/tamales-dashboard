@@ -3,12 +3,13 @@
    ========================================================== */
 .tipo-table-wrap{ overflow-x:auto; border:1px solid var(--linea); border-radius:12px; }
 .tipo-table{ width:100%; min-width:0; table-layout:fixed; border-collapse:collapse; text-align:left; }
-.tipo-column-name{ width:52%; }
-.tipo-column-price{ width:38%; }
-.tipo-column-actions{ width:10%; }
+.tipo-column-name{ width:50%; }
+.tipo-column-price{ width:34%; }
+.tipo-column-actions{ width:16%; }
 .tipo-table thead{ background:var(--hoja); color:var(--masa); font-size:12px;
   text-transform:uppercase; letter-spacing:.04em; }
-.tipo-table th,.tipo-table td{ padding:12px 14px; border-bottom:1px solid var(--linea); vertical-align:middle; }
+.tipo-table th,.tipo-table td{ padding:12px 10px; border-bottom:1px solid var(--linea); vertical-align:middle; }
+.tipo-table th:last-child,.tipo-table td:last-child{ width:58px; padding-right:6px; padding-left:6px; }
 .tipo-table th:last-child,.tipo-table td:last-child{ text-align:center; }
 .tipo-table tbody tr{ background:#FAF5E8; transition:background .15s; }
 .tipo-table tbody tr:hover{ background:#f6efd9; }
@@ -18,18 +19,20 @@
   border:1px solid var(--linea); border-radius:8px; background:#FFF; color:var(--carbon); font-size:14px;
 }
 .tipo-table input.tipo-nombre{ font-weight:600; }
-.form-card .tipo-price-input{ display:flex; align-items:center; gap:8px; margin:0;
+.form-card .tipo-price-input{ display:flex; align-items:center; gap:8px; min-width:0; margin:0;
   width:100%; color:var(--carbon-60); font-size:14px; font-weight:600; }
+.tipo-table input.tipo-precio{ min-width:0; flex:1 1 auto; }
 .tipo-table input.tipo-precio{ font-family:'IBM Plex Mono',monospace; }
 .tipo-table input:focus{ border-color:var(--elote-dark); box-shadow:0 0 0 3px rgba(227,167,43,.2); outline:none; }
 @media (max-width: 720px) {
   #view-config .form-card{ padding:14px; }
-  .tipo-table-wrap{ overflow-x:hidden; }
-  .tipo-column-name{ width:44%; }
-  .tipo-column-price{ width:36%; }
+  .tipo-table-wrap{ overflow-x:auto; }
+  .tipo-column-name{ width:46%; }
+  .tipo-column-price{ width:34%; }
   .tipo-column-actions{ width:20%; }
   .tipo-table thead{ font-size:10px; letter-spacing:0; }
   .tipo-table th,.tipo-table td{ padding:8px 6px; }
+  .tipo-table th:last-child,.tipo-table td:last-child{ width:58px; padding-right:6px; padding-left:6px; }
   .tipo-table th{ overflow-wrap:anywhere; }
   .tipo-table input.tipo-nombre,.tipo-table input.tipo-precio{
     min-width:0; min-height:42px; padding:7px 6px; font-size:12px;
@@ -42,9 +45,9 @@
 }
 @media (max-width: 360px) {
   #view-config .form-card{ padding:10px; }
-  .tipo-column-name{ width:43%; }
-  .tipo-column-price{ width:36%; }
-  .tipo-column-actions{ width:21%; }
+  .tipo-column-name{ width:45%; }
+  .tipo-column-price{ width:33%; }
+  .tipo-column-actions{ width:22%; }
   .tipo-table thead{ font-size:9px; }
   .tipo-table th,.tipo-table td{ padding:7px 4px; }
   .tipo-table .item-remove-btn{
