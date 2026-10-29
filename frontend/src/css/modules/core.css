@@ -13,6 +13,20 @@
 }
 
 *{ box-sizing:border-box; }
+
+/* Paleta alternativa: azul petroleo, crema y terracota. */
+:root{
+  --hoja: #183B4E;
+  --hoja-2: #28556A;
+  --masa: #F6F1E8;
+  --papel: #FFFDF8;
+  --elote: #D98932;
+  --elote-dark:#B96D23;
+  --chile: #B85445;
+  --carbon: #263238;
+  --carbon-60: rgba(38,50,56,.62);
+  --linea: rgba(38,50,56,.14);
+}
 html,body{ margin:0; padding:0; background:var(--masa); color:var(--carbon);
   font-family:'Inter',sans-serif; -webkit-font-smoothing:antialiased; }
 

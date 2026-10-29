@@ -3,11 +3,11 @@
    ========================================================== */
 
 const APP_FONT_URL =
-  "https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap";
+  "https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap";
 
 function installAppFonts() {
   document.querySelectorAll('link[href*="fonts.googleapis.com"]').forEach((link) => {
-    if (link.href !== APP_FONT_URL) link.remove();
+    if (link.href !== APP_FONT_URL && !link.href.includes("Material+Symbols")) link.remove();
   });
   if (!document.querySelector(`link[href="${APP_FONT_URL}"]`)) {
     const link = document.createElement("link");
@@ -18,7 +18,16 @@ function installAppFonts() {
 }
 
 function iconSvg(path, className = "") {
-  return `<svg class="${className}" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${path}" /></svg>`;
+  const iconNames = {
+    "M4 10.5 12 4l8 6.5v7.2a1.3 1.3 0 0 1-1.3 1.3H5.3A1.3 1.3 0 0 1 4 17.7z M8 19v-5h8v5 M8 10h.01 M12 10h.01 M16 10h.01": "storefront",
+    "M20 21a8 8 0 0 0-16 0 M12 13a4 4 0 1 0 0-8 4 4 0 0 0 0 8": "person",
+    "M12 5v14 M5 12h14": "add",
+    "M5 12h14": "remove",
+    "M5 12h14 M13 6l6 6-6 6": "arrow_forward",
+    "M6 6l12 12 M18 6 6 18": "close",
+  };
+  const iconName = iconNames[path] || "circle";
+  return `<span class="material-symbols-rounded ${className}" aria-hidden="true">${iconName}</span>`;
 }
 
 function installSvgIcons() {

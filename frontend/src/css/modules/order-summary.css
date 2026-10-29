@@ -39,11 +39,13 @@
 }
 
 .total-label {
+  font-family:'Space Grotesk',sans-serif;
   font-size: 15px;
   font-weight: 500;
 }
 
 .total-amount {
+  font-family:'Space Grotesk',sans-serif;
   font-size: 26px;
   color: var(--elote);
   letter-spacing: -0.02em;

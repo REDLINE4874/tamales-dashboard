@@ -13,6 +13,116 @@
 .inv-bar{ height:6px; border-radius:4px; background:var(--linea); margin-top:10px; overflow:hidden; }
 .inv-bar-fill{ height:100%; background:var(--elote); border-radius:4px; transition:width .2s; }
 
+/* Inventario como panel de control: cada tipo ocupa una fila breve y legible. */
+#view-inventario > .card {
+  padding: 16px;
+  border: 1px solid rgba(31,58,46,.1);
+  box-shadow: 0 10px 28px rgba(43,33,24,.06);
+}
+
+#view-inventario .inventario-list {
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+#view-inventario .inv-row {
+  display: grid;
+  grid-template-columns: minmax(0,1fr) minmax(96px,35%);
+  grid-template-areas:
+    "top main"
+    "bar bar";
+  gap: 10px 14px;
+  padding: 12px 0 13px;
+  border-bottom: 1px solid rgba(43,33,24,.09);
+}
+
+#view-inventario .inv-row:first-child { padding-top: 2px; }
+#view-inventario .inv-row:last-child { padding-bottom: 2px; }
+
+#view-inventario .inv-row-top {
+  grid-area: top;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 5px;
+  margin: 0;
+}
+
+#view-inventario .inv-tipo {
+  color: var(--hoja);
+  font-family: 'Space Grotesk',sans-serif;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+#view-inventario .inv-vendido {
+  color: var(--carbon-60);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+#view-inventario .inv-row-main {
+  grid-area: main;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  justify-content: center;
+  gap: 6px;
+}
+
+#view-inventario .inv-input {
+  flex: 0 0 auto;
+  width: 100%;
+  min-height: 42px;
+  padding: 9px 11px;
+  border: 1px solid rgba(31,58,46,.16);
+  border-radius: 10px;
+  background: #fffdf7;
+  color: var(--carbon);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+#view-inventario .inv-input:focus {
+  border-color: var(--elote-dark);
+  outline: 3px solid rgba(227,167,43,.16);
+}
+
+#view-inventario .inv-disponible {
+  max-width: 100%;
+  white-space: normal;
+  align-self: flex-start;
+  padding: 4px 7px;
+  border-radius: 999px;
+  background: rgba(31,58,46,.07);
+  color: var(--hoja);
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+#view-inventario .inv-disponible.inv-agotado {
+  background: rgba(178,58,46,.08);
+  color: var(--chile);
+}
+
+#view-inventario .inv-bar {
+  grid-area: bar;
+  height: 5px;
+  margin: 0;
+  background: rgba(43,33,24,.1);
+}
+
+#view-inventario .btn-primary { margin-top: 16px; }
+
+@media (max-width: 380px) {
+  #view-inventario > .card { padding: 14px 12px; }
+  #view-inventario .inv-row { grid-template-columns: minmax(0,1fr) minmax(92px,32%); gap: 9px 10px; }
+}
+
 /* ---------- CIERRE DE SEMANA (inversión / utilidad) ---------- */
 .invest-card{ margin-top:16px; }
 .invest-card h3{ font-size:16px; margin-bottom:10px; }

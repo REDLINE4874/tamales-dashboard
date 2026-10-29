@@ -30,7 +30,8 @@
    ---------------------------------------------------------- */
 :root {
   --font-display: "Space Grotesk", sans-serif;
-  --font-body: "Inter", sans-serif;
+  --font-body: "Space Grotesk", sans-serif;
+  --font-mono: "Space Grotesk", sans-serif;
 }
 
 body,
@@ -53,7 +54,7 @@ h1, h2, h3,
 .mono,
 .week-chip,
 .tipo-price-input input {
-  font-family: var(--font-body);
+  font-family: var(--font-mono);
 }
 
 .brand-svg,
@@ -66,11 +67,34 @@ h1, h2, h3,
   display: block;
 }
 
+.material-symbols-rounded {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  overflow: hidden;
+  font-family: "Material Symbols Rounded";
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-feature-settings: "liga";
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: "liga";
+}
+
 .brand-svg {
   width: 30px;
   height: 30px;
   color: var(--elote);
 }
+
+.brand-svg.material-symbols-rounded,
+.auth-logo-svg.material-symbols-rounded { overflow: visible; }
 
 .auth-logo-svg {
   width: 48px;
@@ -84,6 +108,8 @@ h1, h2, h3,
   height: 16px;
 }
 
+.group-icon .material-symbols-rounded { font-size: 16px; }
+
 #view-nuevo .group-icon::before {
   display: none;
 }
@@ -95,6 +121,9 @@ h1, h2, h3,
   margin: auto;
 }
 
+.btn-plus .material-symbols-rounded,
+.btn-minus .material-symbols-rounded { font-size: 18px; }
+
 .add-icon svg {
   display: block;
   width: 18px;
@@ -105,6 +134,8 @@ h1, h2, h3,
   width: 19px;
   height: 19px;
 }
+
+.btn-arrow .material-symbols-rounded { font-size: 19px; }
 
 .item-remove-btn span {
   display: grid;
@@ -120,6 +151,8 @@ h1, h2, h3,
   width: 15px;
   height: 15px;
 }
+
+.remove-svg.material-symbols-rounded { font-size: 17px; }
 
 #view-nuevo .view-head {
   max-width: 760px;
@@ -205,7 +238,7 @@ h1, h2, h3,
 
 #view-nuevo .group-icon::before {
   content: "01";
-  font-family: "IBM Plex Mono", monospace;
+  font-family: "Space Grotesk", sans-serif;
   font-size: 10px;
   font-weight: 700;
 }
@@ -214,8 +247,8 @@ h1, h2, h3,
   display: block;
   margin-bottom: 12px;
   color: var(--carbon);
-  content: "02  ·  Elige tus tamales\A Agrega cantidades por cada tipo";
-  font-family: "Fraunces", serif;
+  content: "Elige tus tamales";
+  font-family: "Space Grotesk", sans-serif;
   font-size: 17px;
   font-weight: 600;
   line-height: 1.35;
@@ -234,7 +267,7 @@ h1, h2, h3,
   border-radius: 9px;
   background: var(--hoja);
   color: var(--elote);
-  font-family: "IBM Plex Mono", monospace;
+  font-family: "Space Grotesk", sans-serif;
   font-size: 10px;
   font-weight: 700;
 }

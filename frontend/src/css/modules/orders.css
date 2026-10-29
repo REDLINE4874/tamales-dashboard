@@ -39,7 +39,7 @@
 .tickets-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(230px,1fr)); gap:22px; }
 .empty-state{ color:var(--carbon-60); font-size:14px; padding:30px 0; }
 
-.ticket{ position:relative; background:var(--papel); border-radius:4px; padding:18px 18px 16px;
+.ticket{ position:relative; background:var(--papel); border-radius:14px; padding:18px 18px 16px;
   box-shadow:0 6px 16px rgba(43,33,24,.10);
   transform:rotate(var(--tilt,-0.6deg));
 }
@@ -48,6 +48,7 @@
 .ticket:nth-child(3n){ --tilt:-0.3deg; }
 
 .ticket::before{ content:""; position:absolute; top:-6px; left:14px; right:14px; height:12px;
+  border-radius:14px 14px 0 0;
   background-image: radial-gradient(circle 6px, var(--masa) 6px, transparent 6.5px);
   background-size: 16px 12px; background-position: top; background-repeat:repeat-x; }
 
