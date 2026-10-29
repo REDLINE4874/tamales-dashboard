@@ -284,13 +284,61 @@ function actionFeedback(action) {
   return messages[action] || ["Guardando…", "Actualizando la información.", "Cambios guardados."];
 }
 
+async function syncAfterAction(action) {
+  const accionesParciales = [
+    "crearPedido",
+    "editarPedido",
+    "eliminarPedido",
+    "guardarInventario",
+    "guardarConfig",
+  ];
+
+  if (!accionesParciales.includes(action)) {
+    onDataLoaded(await apiGet("dashboard"));
+    return;
+  }
+
+  if (action === "guardarInventario") {
+    STATE.inventario = await apiGet("inventario", { semana: STATE.semanaActual });
+    renderInventario();
+    refreshFormState();
+    return;
+  }
+
+  if (action === "guardarConfig") {
+    const [config, inventario] = await Promise.all([
+      apiGet("config"),
+      apiGet("inventario", { semana: STATE.semanaActual }),
+    ]);
+    STATE.config = config;
+    STATE.inventario = inventario;
+    refreshItemRowOptions();
+    renderConfig();
+    renderInventario();
+    refreshFormState();
+    return;
+  }
+
+  const [pedidos, inventario] = await Promise.all([
+    apiGet("pedidos"),
+    apiGet("inventario", { semana: STATE.semanaActual }),
+  ]);
+  STATE.pendientes = pedidos.filter((p) => p.estado === "Pendiente");
+  STATE.completados = pedidos.filter((p) => p.estado === "Completado");
+  STATE.inventario = inventario;
+  renderPedidosActivos();
+  renderInventario();
+  renderDashboardStats();
+  refreshFormState();
+}
+
 async function postAndSync(action, payload) {
   const [loadingTitle, loadingMessage, successMessage] = actionFeedback(action);
   showLoading(loadingTitle, loadingMessage);
   setConnStatus("Sincronizando…");
   try {
     const data = await apiPost(action, payload);
-    onDataLoaded(data);
+    await syncAfterAction(action);
     setConnStatus("Conectado", "ok");
     showToast(successMessage);
     return data;

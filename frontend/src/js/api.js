@@ -186,7 +186,7 @@ async function getInventarioSemana(semana, pedidosList, configObj) {
   });
 }
 
-async function guardarInventario(semana, items) {
+async function guardarInventarioEnDb(semana, items) {
   const sb = getSbClient();
   sbCheck(sb);
   if (items.length) {
@@ -315,7 +315,7 @@ async function reabrirPedido(id) {
   if (error) throw error;
 }
 
-async function eliminarPedido(id) {
+async function eliminarPedidoEnDb(id) {
   const sb = getSbClient();
   sbCheck(sb);
   const { error } = await sb.from("pedidos").delete().eq("id", id);
@@ -458,13 +458,13 @@ async function apiPost(action, payload = {}) {
       await reabrirPedido(payload.id);
       break;
     case "eliminarPedido":
-      await eliminarPedido(payload.id);
+      await eliminarPedidoEnDb(payload.id);
       break;
     case "guardarConfig":
       await guardarConfig(payload.tipos);
       break;
     case "guardarInventario":
-      await guardarInventario(payload.semana, payload.items);
+      await guardarInventarioEnDb(payload.semana, payload.items);
       break;
     case "guardarInversion":
       await guardarInversion(payload.semana, payload.inversion);
@@ -477,5 +477,5 @@ async function apiPost(action, payload = {}) {
   }
 
   // Devolver dashboard completo actualizado (idéntico al router de Apps Script)
-  return await getDashboardData();
+  return { ok: true };
 }
