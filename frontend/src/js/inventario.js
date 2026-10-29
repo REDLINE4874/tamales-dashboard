@@ -34,6 +34,27 @@ function renderInventario() {
     `;
     })
     .join("");
+
+  // El formulario de pedidos usa STATE.inventario para validar disponibilidad.
+  // Mantenerlo sincronizado mientras se edita el stock evita dejar visible un
+  // warning de excedente después de aumentar la cantidad.
+  wrap.querySelectorAll(".inv-row").forEach((row) => {
+    row.querySelector(".inv-input").addEventListener("input", () => {
+      const inv = STATE.inventario.find((item) => item.tipo === row.dataset.tipo);
+      if (!inv) return;
+
+      const cantidad = Number(row.querySelector(".inv-input").value || 0);
+      if (!Number.isInteger(cantidad) || cantidad < 0) return;
+
+      inv.cantidadInicial = cantidad;
+      inv.disponible = Math.max(cantidad - Number(inv.vendido || 0), 0);
+
+      const disponible = row.querySelector(".inv-disponible");
+      disponible.textContent = `Disponible: ${inv.disponible}`;
+      disponible.classList.toggle("inv-agotado", inv.disponible === 0);
+      refreshFormState();
+    });
+  });
 }
 
 async function guardarInventario() {

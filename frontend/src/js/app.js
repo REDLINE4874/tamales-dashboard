@@ -166,6 +166,10 @@ function onDataLoaded(data) {
   renderInvestCurrent();
   renderHistorico();
   renderConfig();
+  // La respuesta del guardado trae el inventario actualizado. Revalidar
+  // explícitamente el pedido también cubre el caso en que el warning estaba
+  // visible antes de guardar el stock.
+  refreshFormState();
   installSvgIcons();
   if (chartsReady) drawChart();
 }
