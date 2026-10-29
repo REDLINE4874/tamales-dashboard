@@ -22,6 +22,7 @@ function addTipoRow(tipo, precio) {
   `;
   row.querySelector(".item-remove-btn").addEventListener("click", () => row.remove());
   list.appendChild(row);
+  installSvgIcons();
 }
 
 /** Vuelve a dibujar la lista de tipos/precios a partir de STATE.config. */

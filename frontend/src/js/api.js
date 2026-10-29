@@ -106,7 +106,6 @@ async function guardarConfig(tipos) {
     const { error } = await sb.from("config").insert({ tipos });
     if (error) throw error;
   }
-  return getConfig();
 }
 
 async function getSemanaActiva() {
@@ -129,9 +128,23 @@ async function guardarSemanaActiva(semana) {
 async function listarPedidos(filtroEstado) {
   const sb = getSbClient();
   sbCheck(sb);
-  let query = sb.from("pedidos").select("*").order("created_at", { ascending: false });
+  let query = sb
+    .from("pedidos")
+    .select("id, created_at, semana, cliente, detalle, cantidad_total, monto_esperado, monto_cobrado, estado, fecha_completado")
+    .order("created_at", { ascending: false });
   if (filtroEstado) query = query.eq("estado", filtroEstado);
   const { data, error } = await query;
+  if (error) throw error;
+  return (data || []).map(mapPedidoFromDb);
+}
+
+async function listarPedidosSemana(semana) {
+  const sb = getSbClient();
+  sbCheck(sb);
+  const { data, error } = await sb
+    .from("pedidos")
+    .select("semana, detalle")
+    .eq("semana", semana);
   if (error) throw error;
   return (data || []).map(mapPedidoFromDb);
 }
@@ -152,7 +165,7 @@ async function getInventarioSemana(semana, pedidosList, configObj) {
   (invRows || []).forEach((r) => { inicial[r.tipo] = Number(r.cantidad_inicial); });
 
   // Calcular vendido
-  const pedidos = pedidosList || (await listarPedidos());
+  const pedidos = pedidosList || (await listarPedidosSemana(semana));
   const vendidos = {};
   pedidos.filter((p) => p.semana === semana).forEach((p) => {
     (p.detalle || []).forEach((d) => {
@@ -161,10 +174,14 @@ async function getInventarioSemana(semana, pedidosList, configObj) {
   });
 
   return tipos.map(({ tipo }) => {
-    const configurado = Object.prototype.hasOwnProperty.call(inicial, tipo);
-    const cantidadInicial = configurado ? inicial[tipo] : null;
+    // Todo tipo tiene inventario controlado. Si no existe una fila para la
+    // semana, su cantidad inicial es cero; nunca se considera "ilimitado".
+    const configurado = true;
+    const cantidadInicial = Object.prototype.hasOwnProperty.call(inicial, tipo)
+      ? inicial[tipo]
+      : 0;
     const v = vendidos[tipo] || 0;
-    const disponible = configurado ? Math.max(cantidadInicial - v, 0) : null;
+    const disponible = Math.max(cantidadInicial - v, 0);
     return { tipo, cantidadInicial, vendido: v, disponible, configurado };
   });
 }
@@ -172,14 +189,17 @@ async function getInventarioSemana(semana, pedidosList, configObj) {
 async function guardarInventario(semana, items) {
   const sb = getSbClient();
   sbCheck(sb);
-  for (const item of items) {
+  if (items.length) {
     const { error } = await sb.from("inventario").upsert(
-      { semana, tipo: item.tipo, cantidad_inicial: Number(item.cantidad) },
-      { onConflict: "semana,tipo" }
+      items.map((item) => ({
+        semana,
+        tipo: item.tipo,
+        cantidad_inicial: Number(item.cantidad),
+      })),
+      { onConflict: "semana,tipo" },
     );
     if (error) throw error;
   }
-  return getInventarioSemana(semana);
 }
 
 async function crearPedido(cliente, items) {
@@ -188,16 +208,20 @@ async function crearPedido(cliente, items) {
   if (!cliente) throw new Error("Falta el nombre del cliente");
   if (!items || !items.length) throw new Error("El pedido no tiene tamales");
 
-  const semana = await getSemanaActiva();
-  const config = await getConfig();
-  const inventario = await getInventarioSemana(semana, null, config);
+  const [semana, config] = await Promise.all([
+    getSemanaActiva(),
+    getConfig(),
+  ]);
+  const pedidosSemana = await listarPedidosSemana(semana);
+  const inventario = await getInventarioSemana(semana, pedidosSemana, config);
   const invPorTipo = {};
   inventario.forEach((i) => { invPorTipo[i.tipo] = i; });
 
   items.forEach((item) => {
     const inv = invPorTipo[item.tipo];
-    if (inv && inv.configurado && Number(item.cantidad) > inv.disponible) {
-      throw new Error(`No hay suficiente inventario de "${item.tipo}". Disponible: ${inv.disponible}`);
+    const disponible = inv?.configurado ? inv.disponible : 0;
+    if (Number(item.cantidad) > disponible) {
+      throw new Error(`No hay suficiente inventario de "${item.tipo}". Disponible: ${disponible}`);
     }
   });
 
@@ -241,17 +265,17 @@ async function editarPedido(id, cliente, items) {
   });
 
   const config = await getConfig();
-  const inventario = await getInventarioSemana(original.semana, null, config);
+  const pedidosSemana = await listarPedidosSemana(original.semana);
+  const inventario = await getInventarioSemana(original.semana, pedidosSemana, config);
   const invPorTipo = {};
   inventario.forEach((i) => { invPorTipo[i.tipo] = i; });
 
   items.forEach((item) => {
     const inv = invPorTipo[item.tipo];
-    if (inv && inv.configurado) {
-      const disponibleAjustado = inv.disponible + (reservadoOriginal[item.tipo] || 0);
-      if (Number(item.cantidad) > disponibleAjustado) {
-        throw new Error(`No hay suficiente inventario de "${item.tipo}". Disponible: ${disponibleAjustado}`);
-      }
+    const disponibleAjustado = (inv?.configurado ? inv.disponible : 0) +
+      (reservadoOriginal[item.tipo] || 0);
+    if (Number(item.cantidad) > disponibleAjustado) {
+      throw new Error(`No hay suficiente inventario de "${item.tipo}". Disponible: ${disponibleAjustado}`);
     }
   });
 
@@ -314,26 +338,40 @@ async function cerrarSemana(semana, inversion) {
   const semanaActual = semana || (await getSemanaActiva());
   const semanaSiguiente = getSemanaSiguiente(semanaActual);
 
-  if (inversion != null && inversion !== "") {
-    await guardarInversion(semanaActual, Number(inversion));
-  }
-
   const { tipos } = await getConfig();
-  for (const { tipo } of tipos) {
-    await sb.from("inventario").upsert(
-      { semana: semanaSiguiente, tipo, cantidad_inicial: 0 },
-      { onConflict: "semana,tipo" }
+  const operaciones = [];
+  if (inversion != null && inversion !== "") {
+    operaciones.push(guardarInversion(semanaActual, Number(inversion)));
+  }
+  if (tipos.length) {
+    operaciones.push(
+      sb.from("inventario").upsert(
+        tipos.map(({ tipo }) => ({
+          semana: semanaSiguiente,
+          tipo,
+          cantidad_inicial: 0,
+        })),
+        { onConflict: "semana,tipo" },
+      ),
     );
   }
-
-  await guardarSemanaActiva(semanaSiguiente);
+  operaciones.push(guardarSemanaActiva(semanaSiguiente));
+  const resultados = await Promise.all(operaciones);
+  const error = resultados.find((result) => result?.error)?.error;
+  if (error) throw error;
   return { semanaCerrada: semanaActual, semanaNueva: semanaSiguiente };
 }
 
-async function obtenerResumenSemanal(pedidos) {
+async function obtenerCierres() {
   const sb = getSbClient();
   sbCheck(sb);
-  const completados = (pedidos || (await listarPedidos())).filter((p) => p.estado === "Completado");
+  const { data, error } = await sb.from("cierres").select("semana, inversion");
+  if (error) throw error;
+  return data || [];
+}
+
+async function obtenerResumenSemanal(pedidos, cierresData) {
+  const completados = (pedidos || []).filter((p) => p.estado === "Completado");
   const map = {};
   completados.forEach((p) => {
     if (!map[p.semana]) map[p.semana] = { semana: p.semana, total: 0, pedidos: 0 };
@@ -341,7 +379,6 @@ async function obtenerResumenSemanal(pedidos) {
     map[p.semana].pedidos += 1;
   });
 
-  const { data: cierresData } = await sb.from("cierres").select("*");
   const cierres = {};
   (cierresData || []).forEach((c) => { cierres[c.semana] = { inversion: Number(c.inversion) }; });
 
@@ -366,11 +403,16 @@ async function obtenerResumenSemanal(pedidos) {
 /* ── Dashboard Completo ── */
 
 async function getDashboardData() {
-  const todos = await listarPedidos();
-  const semanaActual = await getSemanaActiva();
-  const config = await getConfig();
-  const inventario = await getInventarioSemana(semanaActual, todos, config);
-  const resumenSemanal = await obtenerResumenSemanal(todos);
+  const [todos, semanaActual, config, cierresData] = await Promise.all([
+    listarPedidos(),
+    getSemanaActiva(),
+    getConfig(),
+    obtenerCierres(),
+  ]);
+  const [inventario, resumenSemanal] = await Promise.all([
+    getInventarioSemana(semanaActual, todos, config),
+    obtenerResumenSemanal(todos, cierresData),
+  ]);
 
   return {
     todos,

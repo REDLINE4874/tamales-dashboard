@@ -53,6 +53,7 @@ function addItemRow(presetTipo, presetCantidad) {
 
   list.appendChild(row);
   enhanceCustomSelect(row.querySelector(".item-tipo"));
+  installSvgIcons();
   refreshFormState();
 }
 
@@ -110,8 +111,11 @@ function refreshFormState() {
     const hint = row.querySelector(".item-hint");
     const inv = (STATE.inventario || []).find((item) => item.tipo === tipo);
     if (!inv || !inv.configurado) {
-      hint.textContent = "Disponibles: sin límite";
-      hint.className = "item-hint";
+      hint.textContent = "Disponibles: 0";
+      hint.className = cantidadPorTipo.get(tipo) > 0
+        ? "item-hint item-hint-error"
+        : "item-hint";
+      if (cantidadPorTipo.get(tipo) > 0) hayExcedente = true;
       return;
     }
 

@@ -24,3 +24,314 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ----------------------------------------------------------
+   NUEVA APARIENCIA: PESTAÑA NUEVO PEDIDO
+   ---------------------------------------------------------- */
+:root {
+  --font-display: "Space Grotesk", sans-serif;
+  --font-body: "Inter", sans-serif;
+}
+
+body,
+button,
+input,
+select,
+textarea {
+  font-family: var(--font-body);
+}
+
+h1, h2, h3,
+.brand-name,
+.ticket-cliente,
+.inv-tipo,
+.form-group-title,
+.feedback-card h2 {
+  font-family: var(--font-display) !important;
+}
+
+.mono,
+.week-chip,
+.tipo-price-input input {
+  font-family: var(--font-body);
+}
+
+.brand-svg,
+.auth-logo-svg,
+.group-icon svg,
+.btn-plus svg,
+.btn-minus svg,
+.btn-arrow svg,
+.remove-svg {
+  display: block;
+}
+
+.brand-svg {
+  width: 30px;
+  height: 30px;
+  color: var(--elote);
+}
+
+.auth-logo-svg {
+  width: 48px;
+  height: 48px;
+  margin: 0 auto;
+  color: var(--hoja);
+}
+
+.group-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+#view-nuevo .group-icon::before {
+  display: none;
+}
+
+.btn-plus svg,
+.btn-minus svg {
+  width: 17px;
+  height: 17px;
+  margin: auto;
+}
+
+.add-icon svg {
+  display: block;
+  width: 18px;
+  height: 18px;
+}
+
+.btn-arrow svg {
+  width: 19px;
+  height: 19px;
+}
+
+.item-remove-btn span {
+  display: grid;
+  place-items: center;
+}
+
+.item-remove-btn span::before,
+.item-remove-btn span::after {
+  display: none;
+}
+
+.remove-svg {
+  width: 15px;
+  height: 15px;
+}
+
+#view-nuevo .view-head {
+  max-width: 760px;
+  margin: 0 auto 22px;
+}
+
+#view-nuevo .view-head h1 {
+  font-size: clamp(30px, 4vw, 42px);
+  line-height: 1;
+}
+
+#view-nuevo .view-head p {
+  max-width: 520px;
+  margin-top: 10px;
+  font-size: 13px;
+}
+
+#view-nuevo .head-title-row {
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+}
+
+#view-nuevo .head-title-row::before {
+  display: none;
+}
+
+#view-nuevo .form-container {
+  max-width: 760px;
+}
+
+#view-nuevo .form-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 220px;
+  gap: 22px 26px;
+  padding: 26px;
+  border: 1px solid rgba(31, 58, 46, .12);
+  border-radius: 20px;
+  background: linear-gradient(145deg, #fffdf7 0%, #fffaf0 100%);
+  box-shadow: 0 18px 40px rgba(43, 33, 24, .09);
+}
+
+#view-nuevo .form-card > .form-group:first-child {
+  grid-column: 1 / -1;
+  padding-bottom: 22px;
+  border-bottom: 1px solid rgba(43, 33, 24, .09);
+}
+
+#view-nuevo .form-card > .form-group:nth-child(2) {
+  grid-column: 1;
+  min-width: 0;
+}
+
+#view-nuevo .form-card > .order-summary-card {
+  grid-column: 2;
+  align-self: start;
+  position: sticky;
+  top: 22px;
+  margin-top: 30px;
+}
+
+#view-nuevo .form-card > .btn-submit-order {
+  grid-column: 2;
+  align-self: start;
+}
+
+#view-nuevo .form-group-title {
+  gap: 10px;
+  font-size: 17px;
+}
+
+#view-nuevo .group-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  margin-right: 2px;
+  border-radius: 9px;
+  background: var(--hoja);
+  color: var(--elote);
+  font-size: 0;
+}
+
+#view-nuevo .group-icon::before {
+  content: "01";
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+#view-nuevo .form-card > .form-group:nth-child(2) #itemsList::before {
+  display: block;
+  margin-bottom: 12px;
+  color: var(--carbon);
+  content: "02  ·  Elige tus tamales\A Agrega cantidades por cada tipo";
+  font-family: "Fraunces", serif;
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.35;
+  white-space: pre-line;
+}
+
+#view-nuevo .form-card > .form-group:nth-child(2) #itemsList::after {
+  display: none;
+}
+
+#view-nuevo .group-step {
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 9px;
+  background: var(--hoja);
+  color: var(--elote);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+#view-nuevo .input-wrapper input {
+  min-height: 50px;
+  border-radius: 13px;
+  background: #fff;
+}
+
+#view-nuevo .form-group-header {
+  margin-bottom: 2px;
+}
+
+#view-nuevo .order-items-label {
+  padding: 5px 9px;
+  border: 1px solid rgba(31, 58, 46, .13);
+  border-radius: 999px;
+  color: var(--hoja);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+#view-nuevo .items-list {
+  gap: 10px;
+}
+
+#view-nuevo .item-row {
+  border-color: rgba(31, 58, 46, .12);
+  border-radius: 14px;
+  background: rgba(243, 233, 199, .42);
+}
+
+#view-nuevo .item-row:focus-within {
+  border-color: rgba(227, 167, 43, .75);
+  box-shadow: 0 0 0 3px rgba(227, 167, 43, .13);
+}
+
+#view-nuevo .btn-add-item {
+  margin-top: 12px;
+  border-color: rgba(31, 58, 46, .24);
+  background: rgba(31, 58, 46, .045);
+}
+
+#view-nuevo .btn-add-item:hover {
+  border-color: var(--hoja);
+  background: rgba(31, 58, 46, .09);
+}
+
+#view-nuevo .order-summary-card {
+  min-height: 150px;
+  border-radius: 16px;
+  background: var(--hoja);
+  box-shadow: 0 10px 22px rgba(31, 58, 46, .2);
+}
+
+#view-nuevo .btn-submit-order {
+  min-height: 52px;
+  border-radius: 14px;
+}
+
+@media (max-width: 720px) {
+  #view-nuevo .view-head { margin-bottom: 18px; }
+
+  #view-nuevo .form-card {
+    grid-template-columns: 1fr;
+    gap: 18px;
+    padding: 18px;
+    border-radius: 17px;
+  }
+
+  #view-nuevo .form-card > .form-group:first-child,
+  #view-nuevo .form-card > .form-group:nth-child(2),
+  #view-nuevo .form-card > .order-summary-card,
+  #view-nuevo .form-card > .btn-submit-order {
+    grid-column: 1;
+  }
+
+  #view-nuevo .form-card > .order-summary-card {
+    position: static;
+    margin-top: 0;
+  }
+
+  #view-nuevo .form-card > .btn-submit-order {
+    width: 100%;
+  }
+
+  #view-nuevo .form-group-header {
+    align-items: flex-start;
+    gap: 10px;
+  }
+}
+
+@media (max-width: 400px) {
+  #view-nuevo .form-card { padding: 14px; }
+  #view-nuevo .view-head h1 { font-size: 30px; }
+  #view-nuevo .order-items-label { display: none; }
+}

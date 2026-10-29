@@ -2,7 +2,8 @@
    MEJORAS RESPONSIVAS (MÓVILES: < 720px)
    ========================================================== */
 @media (max-width: 720px) {
-  .app { flex-direction: column; }
+  html, body { overflow-x: hidden; }
+  .app { width: 100%; flex-direction: column; overflow-x: hidden; }
   
   .sidebar { 
     width: 100%; 
@@ -15,7 +16,7 @@
   /* ==========================================================
      ESTADO DE CONEXIÓN EN MÓVILES
      ========================================================== */
-  .sidebar-foot { 
+  .sidebar-foot {
     display: flex; 
     flex-direction: row; 
     justify-content: space-between; 
@@ -24,6 +25,15 @@
     padding-top: 8px; 
     margin-top: 4px;
     border-top: 1px dashed rgba(243,233,199,.2); 
+  }
+
+  .sidebar-foot .btn-logout {
+    width: auto;
+    flex: 0 0 auto;
+    margin-top: 0;
+    padding: 7px 9px;
+    font-size: 11px;
+    white-space: nowrap;
   }
   
   /* Ajustamos los elementos internos para que queden en una sola línea */
@@ -51,7 +61,7 @@
   
   .nav-item { flex: 0 0 auto; text-align: center; min-height: 44px; }
   
-  .content { padding: 16px; }
+  .content { width: 100%; min-width: 0; padding: 16px; }
   .stats-row { display: flex; flex-direction: column; gap: 12px; }
   .order-stats {
     position: sticky;

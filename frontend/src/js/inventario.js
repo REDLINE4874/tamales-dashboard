@@ -23,10 +23,10 @@ function renderInventario() {
         </div>
         <div class="inv-row-main">
           <input type="number" class="inv-input" min="0" step="1"
-                 value="${inv.configurado ? inv.cantidadInicial : ""}"
+                 value="${inv.cantidadInicial}"
                  placeholder="Cantidad inicial">
           <span class="inv-disponible mono ${inv.configurado && inv.disponible === 0 ? "inv-agotado" : ""}">
-            ${inv.configurado ? "Disponible: " + inv.disponible : "Sin límite"}
+            Disponible: ${inv.disponible}
           </span>
         </div>
         <div class="inv-bar"><div class="inv-bar-fill" style="width:${pct}%"></div></div>
@@ -42,8 +42,8 @@ async function guardarInventario() {
   document.querySelectorAll(".inv-row").forEach((row) => {
     const tipo = row.dataset.tipo;
     const val = row.querySelector(".inv-input").value;
-    if (val !== "") {
-      const cantidad = Number(val);
+    {
+      const cantidad = val === "" ? 0 : Number(val);
       if (!Number.isInteger(cantidad) || cantidad < 0) {
         cantidadNoEntera = true;
         return;

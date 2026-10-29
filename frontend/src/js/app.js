@@ -2,6 +2,49 @@
    ESTADO Y ARRANQUE
    ========================================================== */
 
+const APP_FONT_URL =
+  "https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap";
+
+function installAppFonts() {
+  document.querySelectorAll('link[href*="fonts.googleapis.com"]').forEach((link) => {
+    if (link.href !== APP_FONT_URL) link.remove();
+  });
+  if (!document.querySelector(`link[href="${APP_FONT_URL}"]`)) {
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = APP_FONT_URL;
+    document.head.appendChild(link);
+  }
+}
+
+function iconSvg(path, className = "") {
+  return `<svg class="${className}" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${path}" /></svg>`;
+}
+
+function installSvgIcons() {
+  const brandIcon = document.querySelector(".brand-mark");
+  if (brandIcon) {
+    brandIcon.innerHTML = iconSvg("M4 10.5 12 4l8 6.5v7.2a1.3 1.3 0 0 1-1.3 1.3H5.3A1.3 1.3 0 0 1 4 17.7z M8 19v-5h8v5 M8 10h.01 M12 10h.01 M16 10h.01", "brand-svg");
+  }
+  document.querySelectorAll(".site-auth-logo").forEach((logo) => {
+    logo.innerHTML = iconSvg("M4 10.5 12 4l8 6.5v7.2a1.3 1.3 0 0 1-1.3 1.3H5.3A1.3 1.3 0 0 1 4 17.7z M8 19v-5h8v5 M8 10h.01 M12 10h.01 M16 10h.01", "auth-logo-svg");
+  });
+  document.querySelectorAll(".group-icon").forEach((icon) => {
+    icon.textContent = "";
+    icon.appendChild(document.createRange().createContextualFragment(iconSvg("M20 21a8 8 0 0 0-16 0 M12 13a4 4 0 1 0 0-8 4 4 0 0 0 0 8")));
+  });
+  document.querySelectorAll(".btn-plus").forEach((button) => { button.innerHTML = iconSvg("M12 5v14 M5 12h14"); });
+  document.querySelectorAll(".btn-minus").forEach((button) => { button.innerHTML = iconSvg("M5 12h14"); });
+  document.querySelectorAll(".add-icon").forEach((icon) => { icon.innerHTML = iconSvg("M12 5v14 M5 12h14"); });
+  document.querySelectorAll(".btn-arrow").forEach((arrow) => { arrow.innerHTML = iconSvg("M5 12h14 M13 6l6 6-6 6"); });
+  document.querySelectorAll(".item-remove-btn span").forEach((remove) => {
+    remove.innerHTML = iconSvg("M6 6l12 12 M18 6 6 18", "remove-svg");
+  });
+}
+
+installAppFonts();
+installSvgIcons();
+
 let STATE = {
   config: { tipos: [] }, // tipos: [{ tipo, precio }, ...]
   pendientes: [],
@@ -26,23 +69,37 @@ google.charts.setOnLoadCallback(() => {
   if (STATE.resumenSemanal.length) drawChart();
 });
 
-document.addEventListener("DOMContentLoaded", () => {
-  if (!API_URL || API_URL.includes("PEGA_AQUI")) {
-    setConnStatus("Falta configurar API_URL en config.js", "error");
-  }
+function initApp() {
+  installSvgIcons();
   setupNav();
   setupAppDialog();
   setupForm();
   setupModal();
-  document
-    .getElementById("guardarInventarioBtn")
-    .addEventListener("click", guardarInventario);
+  const btnGuardarInv = document.getElementById("guardarInventarioBtn");
+  if (btnGuardarInv) {
+    btnGuardarInv.addEventListener("click", guardarInventario);
+  }
   setupConfig();
-  cargarTodo();
-});
+
+  // Si ya hay sesión en Supabase, cargar datos
+  if (window.SUPABASE_AUTH_CLIENT?.auth) {
+    window.SUPABASE_AUTH_CLIENT.auth.getSession().then(({ data }) => {
+      if (data?.session) {
+        cargarTodo();
+      }
+    });
+  }
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initApp);
+} else {
+  initApp();
+}
 
 function setConnStatus(text, cls) {
   const el = document.getElementById("connStatus");
+  if (!el) return;
   el.textContent = text;
   el.className = "conn-status" + (cls ? " " + cls : "");
 }
@@ -57,9 +114,10 @@ function setupNav() {
         .querySelectorAll(".view")
         .forEach((v) => v.classList.remove("active"));
       btn.classList.add("active");
-      document
-        .getElementById("view-" + btn.dataset.view)
-        .classList.add("active");
+      const targetView = document.getElementById("view-" + btn.dataset.view);
+      if (targetView) {
+        targetView.classList.add("active");
+      }
     });
   });
 }
@@ -80,19 +138,23 @@ async function cargarTodo() {
 }
 
 function onDataLoaded(data) {
-  STATE.config = data.config;
-  STATE.pendientes = data.pendientes;
-  STATE.completados = data.completados;
-  STATE.resumenSemanal = data.resumenSemanal;
-  STATE.inventario = data.inventario;
-  STATE.semanaActual = data.semanaActual;
-  STATE.semanaActualLabel = data.semanaActualLabel;
+  if (!data) return;
+  STATE.config = data.config || { tipos: [] };
+  STATE.pendientes = data.pendientes || [];
+  STATE.completados = data.completados || [];
+  STATE.resumenSemanal = data.resumenSemanal || [];
+  STATE.inventario = data.inventario || [];
+  STATE.semanaActual = data.semanaActual || "";
+  STATE.semanaActualLabel = data.semanaActualLabel || "";
 
-  document.getElementById("currentWeekChip").textContent =
-    data.semanaActualLabel;
-  document.getElementById("inventarioSemanaLabel").textContent =
-    data.semanaActualLabel;
-  const dashLabel = document.getElementById("dashboardSemanaLabel"); if (dashLabel) dashLabel.textContent = (data.semanaActualLabel || "").toLowerCase();
+  const weekChip = document.getElementById("currentWeekChip");
+  if (weekChip) weekChip.textContent = data.semanaActualLabel;
+
+  const invLabel = document.getElementById("inventarioSemanaLabel");
+  if (invLabel) invLabel.textContent = data.semanaActualLabel;
+
+  const dashLabel = document.getElementById("dashboardSemanaLabel");
+  if (dashLabel) dashLabel.textContent = (data.semanaActualLabel || "").toLowerCase();
 
   if (!document.querySelector("#itemsList .item-row")) addItemRow();
   else refreshItemRowOptions();
@@ -104,6 +166,7 @@ function onDataLoaded(data) {
   renderInvestCurrent();
   renderHistorico();
   renderConfig();
+  installSvgIcons();
   if (chartsReady) drawChart();
 }
 
@@ -117,17 +180,20 @@ function onError(err) {
 }
 
 function setupAppDialog() {
-  document
-    .getElementById("appDialogConfirm")
-    .addEventListener("click", () => closeAppDialog(true));
-  document
-    .getElementById("appDialogCancel")
-    .addEventListener("click", () => closeAppDialog(false));
-  document
-    .getElementById("appDialogOverlay")
-    .addEventListener("keydown", (event) => {
+  const confirmBtn = document.getElementById("appDialogConfirm");
+  if (confirmBtn) {
+    confirmBtn.addEventListener("click", () => closeAppDialog(true));
+  }
+  const cancelBtn = document.getElementById("appDialogCancel");
+  if (cancelBtn) {
+    cancelBtn.addEventListener("click", () => closeAppDialog(false));
+  }
+  const overlay = document.getElementById("appDialogOverlay");
+  if (overlay) {
+    overlay.addEventListener("keydown", (event) => {
       if (event.key === "Escape") closeAppDialog(false);
     });
+  }
 }
 
 function showAppDialog({
@@ -140,19 +206,28 @@ function showAppDialog({
 }) {
   if (appDialogResolver) closeAppDialog(false);
 
-  document.getElementById("appDialogTitle").textContent = title;
-  document.getElementById("appDialogMessage").textContent = message;
+  const titleEl = document.getElementById("appDialogTitle");
+  if (titleEl) titleEl.textContent = title;
+  const msgEl = document.getElementById("appDialogMessage");
+  if (msgEl) msgEl.textContent = message;
+
   const cancelButton = document.getElementById("appDialogCancel");
-  cancelButton.textContent = cancelText;
-  cancelButton.hidden = !showCancel;
+  if (cancelButton) {
+    cancelButton.textContent = cancelText;
+    cancelButton.hidden = !showCancel;
+  }
 
   const confirmButton = document.getElementById("appDialogConfirm");
-  confirmButton.textContent = confirmText;
-  confirmButton.classList.toggle("btn-danger", danger);
+  if (confirmButton) {
+    confirmButton.textContent = confirmText;
+    confirmButton.classList.toggle("btn-danger", danger);
+  }
 
   const overlay = document.getElementById("appDialogOverlay");
-  overlay.hidden = false;
-  requestAnimationFrame(() => confirmButton.focus());
+  if (overlay) {
+    overlay.hidden = false;
+    requestAnimationFrame(() => confirmButton?.focus());
+  }
 
   return new Promise((resolve) => {
     appDialogResolver = resolve;
@@ -161,24 +236,30 @@ function showAppDialog({
 
 function closeAppDialog(confirmed) {
   if (!appDialogResolver) return;
-  document.getElementById("appDialogOverlay").hidden = true;
+  const overlay = document.getElementById("appDialogOverlay");
+  if (overlay) overlay.hidden = true;
   const resolve = appDialogResolver;
   appDialogResolver = null;
   resolve(confirmed);
 }
 
 function showLoading(title, message) {
-  document.getElementById("loadingTitle").textContent = title;
-  document.getElementById("loadingMessage").textContent = message;
-  document.getElementById("loadingOverlay").hidden = false;
+  const titleEl = document.getElementById("loadingTitle");
+  if (titleEl) titleEl.textContent = title;
+  const msgEl = document.getElementById("loadingMessage");
+  if (msgEl) msgEl.textContent = message;
+  const overlay = document.getElementById("loadingOverlay");
+  if (overlay) overlay.hidden = false;
 }
 
 function hideLoading() {
-  document.getElementById("loadingOverlay").hidden = true;
+  const overlay = document.getElementById("loadingOverlay");
+  if (overlay) overlay.hidden = true;
 }
 
 function showToast(message) {
   const toast = document.getElementById("appToast");
+  if (!toast) return;
   toast.textContent = message;
   toast.classList.add("visible");
   clearTimeout(toastTimer);
@@ -199,14 +280,6 @@ function actionFeedback(action) {
   return messages[action] || ["Guardando…", "Actualizando la información.", "Cambios guardados."];
 }
 
-/**
- * Envía una acción de escritura (crear/editar/eliminar pedido, guardar
- * inventario, etc.) y refresca la UI con la MISMA respuesta del POST, en
- * vez de hacer una segunda petición completa a "dashboard". El backend ya
- * devuelve el dashboard actualizado en cada acción de escritura, así que
- * esto le ahorra al usuario una ida y vuelta entera al servidor (que en
- * Apps Script/JSONP es lo que más tarda).
- */
 async function postAndSync(action, payload) {
   const [loadingTitle, loadingMessage, successMessage] = actionFeedback(action);
   showLoading(loadingTitle, loadingMessage);
@@ -218,7 +291,7 @@ async function postAndSync(action, payload) {
     showToast(successMessage);
     return data;
   } catch (err) {
-    setConnStatus("Sin conexión con la API", "error");
+    setConnStatus("Error al sincronizar", "error");
     throw err;
   } finally {
     hideLoading();
