@@ -115,10 +115,13 @@ if (!siteAuthReady) {
     siteAuthConfig.anonKey,
     {
       auth: {
+        // Mantiene la sesión solo en esta pestaña: sobrevive a recargas y
+        // desaparece al cerrarla.
         persistSession: true,
         autoRefreshToken: true,
         detectSessionInUrl: true,
         storageKey: "tamales-dashboard-auth",
+        storage: window.sessionStorage,
       },
     }
   );
