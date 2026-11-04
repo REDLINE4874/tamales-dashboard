@@ -32,14 +32,12 @@
 }
 
 html {
-  min-width: 320px;
   min-height: 100%;
   background: var(--page);
   scroll-behavior: smooth;
 }
 
 body {
-  min-width: 320px;
   min-height: 100vh;
   margin: 0;
   background: var(--background);
@@ -522,6 +520,7 @@ h3 {
 }
 
 .item-row {
+  container: item-row / inline-size;
   position: relative;
   min-width: 0;
   padding: 14px;
@@ -559,6 +558,7 @@ h3 {
 .item-type-group .custom-select {
   width: 100%;
   min-width: 0;
+  max-width: 100%;
 }
 
 .item-hint {
@@ -1493,7 +1493,45 @@ h3 {
 }
 
 .item-row .custom-select-trigger {
+  min-width: 0;
   min-height: 42px;
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+@container item-row (max-width: 480px) {
+  .item-row {
+    padding: 8px;
+  }
+
+  .item-row-main {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .item-type-group {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .item-type-group::before {
+    grid-column: 1;
+  }
+
+  .item-hint {
+    justify-self: start;
+  }
+
+  .item-row-actions {
+    min-width: 0;
+    justify-content: flex-start;
+    gap: 6px;
+  }
+
+  .cant-control {
+    gap: 4px;
+  }
 }
 
 .chart-month-select .custom-select-trigger {
@@ -1781,9 +1819,29 @@ h3 {
     grid-template-columns: minmax(0, 1fr) 230px;
     gap: 18px;
   }
+
+  .item-row-main {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .item-row-actions {
+    justify-content: flex-start;
+  }
+
+  .item-type-group {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .item-type-group::before {
+    grid-column: 1;
+  }
+
+  .item-hint {
+    justify-self: start;
+  }
 }
 
-@media (max-width: 720px) {
+@media (max-width: 800px) {
   :root {
     --mobile-header-height: 126px;
   }
@@ -1965,7 +2023,7 @@ h3 {
 
   .item-row-actions {
     width: 100%;
-    justify-content: space-between;
+    justify-content: flex-start;
   }
 
   .chart-card {
