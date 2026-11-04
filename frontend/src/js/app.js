@@ -33,10 +33,10 @@ function iconSvg(path, className = "") {
 function installSvgIcons() {
   const brandIcon = document.querySelector(".brand-mark");
   if (brandIcon) {
-    brandIcon.innerHTML = iconSvg("M4 10.5 12 4l8 6.5v7.2a1.3 1.3 0 0 1-1.3 1.3H5.3A1.3 1.3 0 0 1 4 17.7z M8 19v-5h8v5 M8 10h.01 M12 10h.01 M16 10h.01", "brand-svg");
+    brandIcon.innerHTML = '<img class="brand-svg" src="icons/logo.svg" alt="" aria-hidden="true">';
   }
   document.querySelectorAll(".site-auth-logo").forEach((logo) => {
-    logo.innerHTML = iconSvg("M4 10.5 12 4l8 6.5v7.2a1.3 1.3 0 0 1-1.3 1.3H5.3A1.3 1.3 0 0 1 4 17.7z M8 19v-5h8v5 M8 10h.01 M12 10h.01 M16 10h.01", "auth-logo-svg");
+    logo.innerHTML = '<img class="auth-logo-svg" src="icons/logo.svg" alt="" aria-hidden="true">';
   });
   document.querySelectorAll(".group-icon").forEach((icon) => {
     icon.textContent = "";
@@ -47,7 +47,8 @@ function installSvgIcons() {
   document.querySelectorAll(".add-icon").forEach((icon) => { icon.innerHTML = iconSvg("M12 5v14 M5 12h14"); });
   document.querySelectorAll(".btn-arrow").forEach((arrow) => { arrow.innerHTML = iconSvg("M5 12h14 M13 6l6 6-6 6"); });
   document.querySelectorAll(".item-remove-btn span").forEach((remove) => {
-    remove.innerHTML = iconSvg("M6 6l12 12 M18 6 6 18", "remove-svg");
+    remove.innerHTML =
+      '<svg class="remove-svg" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m7 7 10 10M17 7 7 17" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>';
   });
 }
 
@@ -157,7 +158,12 @@ function onDataLoaded(data) {
   STATE.semanaActualLabel = data.semanaActualLabel || "";
 
   const weekChip = document.getElementById("currentWeekChip");
-  if (weekChip) weekChip.textContent = data.semanaActualLabel;
+  if (weekChip) {
+    const weekNumber = STATE.semanaActualLabel.match(/Semana\s+(\d+)/i)?.[1];
+    weekChip.textContent = weekNumber ? `Semana ${weekNumber}` : STATE.semanaActualLabel;
+    weekChip.title = STATE.semanaActualLabel;
+    weekChip.setAttribute("aria-label", STATE.semanaActualLabel);
+  }
 
   const invLabel = document.getElementById("inventarioSemanaLabel");
   if (invLabel) invLabel.textContent = data.semanaActualLabel;

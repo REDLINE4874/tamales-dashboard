@@ -6,12 +6,12 @@
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#f7f1e7",
-  "theme_color": "#7f2f1f",
+  "background_color": "#292929",
+  "theme_color": "#292929",
   "lang": "es-MX",
   "icons": [
     {
-      "src": "icons/icon.svg",
+      "src": "icons/logo.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any maskable"

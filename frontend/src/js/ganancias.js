@@ -105,7 +105,7 @@ function drawChart() {
   const options = {
     backgroundColor: "transparent",
     legend: { position: "none" },
-    colors: ["#E3A72B"],
+    colors: ["#A4E5B8"],
     chartArea: {
       // Márgenes proporcionales en vez de píxeles fijos: en pantallas
       // angostas "left: 60" dejaba las barras apretadas contra el eje.
@@ -117,10 +117,12 @@ function drawChart() {
       height: isMobile ? "68%" : "75%",
     },
     hAxis: {
-      textStyle: { color: "#2B2118", fontName: "Inter", fontSize },
+      textStyle: { color: "#E4DFD5", fontName: "Space Grotesk", fontSize },
+      gridlines: { color: "#414141" },
     },
     vAxis: {
-      textStyle: { color: "#2B2118", fontName: "Inter", fontSize },
+      textStyle: { color: "#E4DFD5", fontName: "Space Grotesk", fontSize },
+      gridlines: { color: "#414141" },
       format: "$#",
     },
     bar: { groupWidth: "55%" },
