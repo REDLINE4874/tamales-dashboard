@@ -3012,3 +3012,10 @@ button:not(:disabled):active {
     box-shadow: var(--shadow);
   }
 }
+
+@media (hover: none) {
+  button:focus:not(:focus-visible) {
+    outline: none;
+    box-shadow: none;
+  }
+}
