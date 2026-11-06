@@ -6,7 +6,7 @@ Panel web para administrar pedidos, inventario semanal, cobros, ganancias y tipo
 
 - Crear, editar, cobrar y eliminar pedidos.
 - Control de inventario por tipo de tamal.
-- Inventario semanal reiniciado en `0` al cerrar la semana.
+- Inventario controlado por día y producto.
 - Validación para impedir pedidos sin stock disponible.
 - Resumen de ventas, inversión y utilidad.
 - Histórico semanal con filtros por mes y año.
@@ -72,9 +72,24 @@ También puedes usar Live Server de VS Code. Abre la URL que proporcione el serv
 
 El archivo `render.yaml` contiene la configuración para publicar el frontend como sitio estático en Render.
 
-## Inventario y cierre semanal
+### Pedidos de clientes
 
-Cada tipo de tamal tiene inventario controlado. Si no se registra una cantidad, su stock se considera `0`; no existe inventario ilimitado.
+La vista pública está en `frontend/pedido.html` y se publica junto con el panel en el mismo sitio:
+
+- Panel: `/`
+- Clientes: `/pedido.html`
+
+Ambas vistas usan el mismo proyecto de Supabase. Después de instalar la base inicial con `supabase/tamales.sql`, ejecuta `supabase/pedidos_publicos.sql` y luego `supabase/inventario_diario.sql` desde el SQL Editor de Supabase. Si ya ejecutaste versiones anteriores, vuelve a ejecutar los archivos en ese orden para incorporar los cambios.
+
+Al continuar al checkout, las cantidades se apartan durante 10 minutos. Al enviar nombre y teléfono, el apartado se convierte en pedido pendiente del panel, sin pago en línea. Si el cliente cancela o deja vencer el tiempo, el inventario se libera. Sus datos de contacto se recuerdan solo en el navegador mediante `localStorage`.
+
+La configuración del panel permite activar los atoles chico (500 ml) y grande (1 L), fijar sus precios y registrar sus cantidades en Inventario. El panel mantiene su formulario habitual para capturar pedidos. El inventario y la apertura de pedidos en línea se controlan por día desde la sección Inventario.
+
+## Inventario diario y cierre semanal
+
+El inventario se registra para cada fecha. Los pedidos de panel, pedidos web y apartados temporales descuentan del inventario del día correspondiente. Si no hay cantidad cargada para la fecha actual, la disponibilidad se considera `0`.
+
+Al guardar el inventario del día, el panel permite elegir por separado si abre los pedidos de tamales y bebidas. En Inventario también se pueden abrir o cerrar ambas categorías de forma independiente. La vista del cliente muestra solo las categorías abiertas, y el cambio de fecha las cierra hasta que se registre el inventario del nuevo día.
 
 Al cerrar una semana:
 

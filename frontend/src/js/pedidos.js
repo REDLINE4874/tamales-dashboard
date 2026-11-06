@@ -306,11 +306,15 @@ function renderPedidosActivos() {
   wrap.innerHTML = STATE.pendientes
     .map(
       (p) => `
-    <div class="ticket">
+    <div class="ticket ${p.origen === "cliente" ? "ticket--cliente" : ""}">
       <div class="ticket-head">
         <span class="ticket-cliente">${escapeHtml(p.cliente)}</span>
-        <span class="ticket-badge">Pendiente</span>
+        <div class="ticket-badges">
+          ${p.origen === "cliente" ? '<span class="ticket-source-badge">Cliente web</span>' : ""}
+          <span class="ticket-badge">Pendiente</span>
+        </div>
       </div>
+      ${p.telefono ? `<a class="ticket-phone" href="tel:${String(p.telefono).replace(/[^+\d]/g, "")}">${escapeHtml(p.telefono)}</a>` : ""}
       <ul class="ticket-detalle">
         ${p.detalle.map((d) => `<li><span>${escapeHtml(d.tipo)}</span><span>x${d.cantidad}</span></li>`).join("")}
       </ul>
@@ -319,7 +323,7 @@ function renderPedidosActivos() {
       </div>
       <div class="ticket-actions">
         <button class="ticket-edit-btn" onclick="abrirEdicionPedido('${p.id}')">Editar</button>
-        <button class="ticket-delete-btn" onclick="eliminarPedido('${p.id}')">Eliminar</button>
+        <button class="ticket-delete-btn" onclick="eliminarPedido('${p.id}')">Cancelar pedido</button>
         <button class="ticket-complete-btn" onclick="abrirModal('${p.id}', '${escapeHtml(p.cliente)}', ${p.montoEsperado})">Marcar pagado</button>
       </div>
     </div>
@@ -332,22 +336,47 @@ function renderPedidosActivos() {
  *  al inventario disponible de la semana correspondiente. */
 async function eliminarPedido(id) {
   const pedido = STATE.pendientes.find((p) => p.id === id);
-  const nombre = pedido ? pedido.cliente : "este pedido";
-  const confirmar = await showAppDialog({
-    title: "Eliminar comanda",
-    message: `¿Quieres eliminar la comanda de ${nombre}? Los tamales volverán al inventario disponible.`,
-    confirmText: "Sí, eliminar",
-    showCancel: true,
-    danger: true,
-  });
-  if (!confirmar) return;
+  const motivo = await solicitarMotivoCancelacion(pedido?.cliente || "este pedido");
+  if (motivo === null) return;
 
   try {
-    await postAndSync("eliminarPedido", { id });
+    await postAndSync("eliminarPedido", { id, motivo });
     if (editingPedidoId === id) restablecerFormularioPedido();
   } catch (err) {
     onError(err);
   }
+}
+
+function solicitarMotivoCancelacion(cliente) {
+  const dialog = document.getElementById("cancelOrderDialog");
+  const reason = document.getElementById("cancelOrderReason");
+  document.getElementById("cancelOrderMessage").textContent = `El pedido de ${cliente} se quitará de las comandas y las piezas volverán al inventario. El cliente podrá consultar este motivo con su folio y teléfono.`;
+  reason.value = "";
+  dialog.showModal();
+  return new Promise((resolve) => {
+    const form = document.getElementById("cancelOrderForm");
+    const back = document.getElementById("cancelOrderBackBtn");
+    const onSubmit = (event) => {
+      event.preventDefault();
+      if (reason.value.trim().length < 3) {
+        reason.setCustomValidity("Escribe un motivo de al menos 3 caracteres.");
+        reason.reportValidity();
+        return;
+      }
+      dialog.close("confirm");
+    };
+    const onInput = () => reason.setCustomValidity("");
+    const onBack = () => dialog.close("cancel");
+    form.addEventListener("submit", onSubmit);
+    reason.addEventListener("input", onInput);
+    back.addEventListener("click", onBack);
+    dialog.addEventListener("close", () => {
+      form.removeEventListener("submit", onSubmit);
+      reason.removeEventListener("input", onInput);
+      back.removeEventListener("click", onBack);
+      resolve(dialog.returnValue === "confirm" ? reason.value.trim() : null);
+    }, { once: true });
+  });
 }
 
 /* ==========================================================

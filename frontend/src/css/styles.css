@@ -239,6 +239,286 @@ h3 {
   box-shadow: 0 0 0 transparent;
 }
 
+.ticket-phone {
+  display: inline-block;
+  margin: 7px 0 2px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.config-subheading {
+  margin: 30px 0 6px;
+  font-size: 20px;
+}
+
+.config-help {
+  margin: 0 0 14px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.beverage-enabled {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--green);
+}
+
+.switch-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  white-space: nowrap;
+  font-size: 13px;
+}
+
+.beverage-config-table {
+  width: 100%;
+  min-width: 0;
+  table-layout: fixed;
+}
+
+.beverage-product-column { width: 42%; }
+.beverage-price-column { width: 30%; }
+.beverage-menu-column { width: 28%; }
+
+.beverage-config-table th:last-child,
+.beverage-config-table td:last-child {
+  width: 28%;
+  text-align: center;
+}
+
+.beverage-config-table td:first-child {
+  overflow-wrap: anywhere;
+  line-height: 1.35;
+}
+
+.beverage-config-table th,
+.beverage-config-table td {
+  min-width: 0;
+  padding-right: 7px;
+  padding-left: 7px;
+}
+
+.beverage-config-table td:last-child {
+  width: 28%;
+}
+
+.beverage-config-table .tipo-price-input > span {
+  flex: 0 0 auto;
+}
+
+.beverage-config-table input.tipo-precio {
+  min-width: 0;
+  padding-right: 6px;
+  padding-left: 6px;
+}
+
+.beverage-config-table .tipo-price-input {
+  gap: 5px;
+}
+
+.inventory-category + .inventory-category {
+  margin-top: 28px;
+  padding-top: 24px;
+  border-top: 1px solid var(--separator);
+}
+
+.inventory-category-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.inventory-category-head h2 {
+  margin: 0 0 5px;
+  font-size: 19px;
+}
+
+.inventory-category-state {
+  color: var(--red-soft);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.inventory-category-state.is-open {
+  color: var(--green);
+}
+
+.inventory-toggle-btn {
+  min-width: 92px;
+}
+
+.inventory-archive-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 24px 0 18px;
+  padding: 14px 0;
+  border-top: 1px solid var(--separator);
+}
+
+.inventory-archive-actions p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.inventory-archive-actions button {
+  flex: 0 0 auto;
+}
+
+@media (max-width: 600px) {
+  .beverage-config-table th,
+  .beverage-config-table td {
+    padding: 7px 4px;
+    font-size: 12px;
+  }
+
+  .beverage-config-table .tipo-price-input {
+    gap: 3px;
+    font-size: 12px;
+  }
+
+  .beverage-config-table input.tipo-precio {
+    min-height: 40px;
+    padding: 6px 3px;
+    font-size: 12px;
+  }
+
+  .inventory-category-head {
+    align-items: flex-start;
+  }
+
+  .inventory-toggle-btn {
+    min-width: 76px;
+    min-height: 42px;
+    padding-right: 10px;
+    padding-left: 10px;
+  }
+
+  .inventory-archive-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .inventory-archive-actions button {
+    width: 100%;
+    min-height: 44px;
+  }
+}
+
+.inventory-save-dialog {
+  width: min(92vw, 430px);
+  padding: 24px;
+  border: 2px solid var(--ink);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 7px 7px 0 var(--ink);
+}
+
+.inventory-save-dialog::backdrop {
+  background: rgb(20 18 15 / 60%);
+  backdrop-filter: blur(2px);
+}
+
+.inventory-save-dialog h2 {
+  margin: 0 0 8px;
+  font-size: 20px;
+}
+
+.inventory-save-dialog p {
+  margin: 0 0 18px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.inventory-save-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 0;
+  border-top: 1px solid var(--separator);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.inventory-save-option input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--green);
+}
+
+.inventory-save-dialog textarea {
+  display: block;
+  width: 100%;
+  min-height: 96px;
+  padding: 10px 12px;
+  border: var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-raised);
+  color: var(--text);
+  font: inherit;
+  resize: vertical;
+}
+
+.inventory-save-dialog textarea:focus-visible {
+  outline: 2px solid var(--accent, var(--green));
+  outline-offset: 2px;
+}
+
+.inventory-save-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.inventory-order-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 18px;
+  padding: 12px 14px;
+  border: 1px solid #e8c9c5;
+  border-radius: var(--radius);
+  background: #fff2f0;
+  color: #96352d;
+}
+
+.inventory-order-status > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 13px;
+}
+
+.inventory-order-status i {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #bd4138;
+}
+
+.inventory-order-status.is-open {
+  border-color: #bdd9c6;
+  background: #eef8f0;
+  color: #286440;
+}
+
+.inventory-order-status.is-open i {
+  background: #398c50;
+  box-shadow: 0 0 0 3px #398c5022;
+}
+
+
 .sidebar-foot {
   display: grid;
   gap: 8px;
@@ -828,6 +1108,31 @@ h3 {
   padding: 20px;
 }
 
+.ticket.ticket--cliente {
+  border-left: 5px solid #31805a;
+  background: color-mix(in srgb, var(--surface) 90%, #c9e9d6);
+}
+
+.ticket-badges {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 5px;
+}
+
+.ticket-source-badge {
+  padding: 4px 7px;
+  border: 1px solid #31805a;
+  border-radius: 4px;
+  background: #d8f0e1;
+  color: #1d613e;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
 .ticket-head,
 .ticket-foot {
   display: flex;
@@ -1337,6 +1642,11 @@ h3 {
 .tipo-table td:last-child {
   width: 72px;
   text-align: center;
+}
+
+.tipo-table.beverage-config-table th:last-child,
+.tipo-table.beverage-config-table td:last-child {
+  width: 28%;
 }
 
 .tipo-table tbody tr {

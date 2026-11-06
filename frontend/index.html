@@ -152,17 +152,20 @@
         <section id="view-inventario" class="view">
           <header class="view-head">
             <h1>
-              Inventario — <span id="inventarioSemanaLabel">esta semana</span>
+              Inventario — <span id="inventarioDiaLabel">hoy</span>
             </h1>
             <p>
-              Define cuántos tamales de cada tipo tienes disponibles. Las
-              comandas se descuentan automáticamente.
+              Registra las cantidades disponibles para este día. Los pedidos y apartados se descuentan automáticamente.
             </p>
           </header>
           <div class="card">
             <div id="inventarioList" class="inventario-list"></div>
+            <div class="inventory-archive-actions">
+              <p>Cierra los registros de inventario de fechas pasadas. Se conserva el historial de pedidos.</p>
+              <button type="button" class="btn-ghost" id="cerrarInventariosAnterioresBtn">Cerrar inventarios anteriores</button>
+            </div>
             <button class="btn-primary" id="guardarInventarioBtn">
-              Guardar inventario
+              Guardar inventario del día
             </button>
           </div>
         </section>
@@ -248,6 +251,15 @@
             <button type="button" class="btn-add-item" id="addTipoBtn">
               <span class="add-icon">+</span> Agregar tipo de tamal
             </button>
+            <h2 class="config-subheading">Bebidas</h2>
+            <p class="config-help">Define cuáles atoles aparecen en el menú para clientes y su precio. La cantidad se ajusta en Inventario.</p>
+            <div class="tipo-table-wrap">
+              <table class="tipo-table beverage-config-table">
+                <colgroup><col class="beverage-product-column"><col class="beverage-price-column"><col class="beverage-menu-column"></colgroup>
+                <thead><tr><th scope="col">Producto</th><th scope="col">Precio</th><th scope="col">En el menú</th></tr></thead>
+                <tbody id="bebidasList"></tbody>
+              </table>
+            </div>
             <div id="configWarning" class="form-warning" hidden></div>
             <button class="btn-primary" id="guardarConfigBtn">Guardar cambios</button>
           </div>
@@ -306,6 +318,30 @@
       </section>
     </div>
 
+    <dialog class="inventory-save-dialog" id="cancelOrderDialog" aria-labelledby="cancelOrderTitle" aria-describedby="cancelOrderMessage">
+      <form id="cancelOrderForm">
+        <h2 id="cancelOrderTitle">Cancelar pedido</h2>
+        <p id="cancelOrderMessage">Escribe el motivo que verá el cliente al consultar su pedido.</p>
+        <label class="inventory-save-option cancel-reason-label" for="cancelOrderReason"><span>Motivo de cancelación</span></label>
+        <textarea id="cancelOrderReason" required minlength="3" maxlength="500" rows="4" placeholder="Describe brevemente el motivo"></textarea>
+        <div class="inventory-save-actions">
+          <button type="button" class="btn-ghost" id="cancelOrderBackBtn">Volver</button>
+          <button type="submit" class="btn-primary">Confirmar cancelación</button>
+        </div>
+      </form>
+    </dialog>
+    <dialog class="inventory-save-dialog" id="inventorySaveDialog" aria-labelledby="inventorySaveTitle" aria-describedby="inventorySaveMessage">
+      <form method="dialog" id="inventorySaveForm">
+        <h2 id="inventorySaveTitle">Guardar inventario del día</h2>
+        <p id="inventorySaveMessage">Elige qué pedidos quieres abrir al guardar.</p>
+        <label class="inventory-save-option"><input type="checkbox" id="openTamalesAfterSave"><span>Abrir pedidos de tamales</span></label>
+        <label class="inventory-save-option"><input type="checkbox" id="openDrinksAfterSave"><span>Abrir pedidos de bebidas</span></label>
+        <div class="inventory-save-actions">
+          <button type="submit" class="btn-ghost" value="cancel">Cancelar</button>
+          <button type="submit" class="btn-primary" value="save">Guardar inventario</button>
+        </div>
+      </form>
+    </dialog>
     <div id="appToast" class="app-toast" role="status" aria-live="polite"></div>
 
     <!-- Supabase JS Client (UMD) & Autenticaci�n estilo Agendas -->

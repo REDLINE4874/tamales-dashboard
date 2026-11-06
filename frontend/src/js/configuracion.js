@@ -35,6 +35,18 @@ function renderConfig() {
   } else {
     tipos.forEach((t) => addTipoRow(t.tipo, t.precio));
   }
+
+  const bebidaList = document.getElementById("bebidasList");
+  const bebidas = STATE.config.bebidas?.length ? STATE.config.bebidas : [
+    { tipo: "Atole chico (500 ml)", precio: 0, activo: false },
+    { tipo: "Atole grande (1 L)", precio: 0, activo: false },
+  ];
+  bebidaList.innerHTML = bebidas.map((bebida) => `
+    <tr class="bebida-row" data-tipo="${escapeHtml(bebida.tipo)}">
+      <td>${escapeHtml(bebida.tipo)}</td>
+      <td><label class="tipo-price-input"><span>$</span><input type="number" class="bebida-precio" min="0" step="0.01" value="${Number(bebida.precio || 0)}"></label></td>
+      <td><input type="checkbox" class="beverage-enabled" aria-label="Mostrar ${escapeHtml(bebida.tipo)} en el menú" ${bebida.activo ? "checked" : ""}></td>
+    </tr>`).join("");
 }
 
 async function guardarConfigTipos() {
@@ -42,6 +54,7 @@ async function guardarConfigTipos() {
   warning.hidden = true;
 
   const tipos = [];
+  const bebidas = [];
   const nombres = new Set();
   let error = "";
 
@@ -79,11 +92,29 @@ async function guardarConfigTipos() {
     return;
   }
 
+  document.querySelectorAll("#bebidasList .bebida-row").forEach((row) => {
+    const precio = Number(row.querySelector(".bebida-precio").value);
+    if (!Number.isFinite(precio) || precio < 0) {
+      error = `Escribe un precio válido para ${row.dataset.tipo}.`;
+      return;
+    }
+    bebidas.push({
+      tipo: row.dataset.tipo,
+      precio,
+      activo: row.querySelector(".beverage-enabled").checked,
+    });
+  });
+  if (error) {
+    warning.hidden = false;
+    warning.textContent = error;
+    return;
+  }
+
   const btn = document.getElementById("guardarConfigBtn");
   btn.disabled = true;
   btn.textContent = "Guardando…";
   try {
-    await postAndSync("guardarConfig", { tipos });
+    await postAndSync("guardarConfig", { tipos, bebidas });
   } catch (err) {
     onError(err);
   } finally {

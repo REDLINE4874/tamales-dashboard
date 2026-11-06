@@ -56,13 +56,17 @@ installAppFonts();
 installSvgIcons();
 
 let STATE = {
-  config: { tipos: [] }, // tipos: [{ tipo, precio }, ...]
+  config: { tipos: [], bebidas: [] }, // catalogo de tamales y bebidas
   pendientes: [],
   completados: [],
   resumenSemanal: [],
   inventario: [],
   semanaActual: "",
   semanaActualLabel: "",
+  fechaOperativa: "",
+  fechaOperativaLabel: "",
+  pedidosTamalesAbiertos: false,
+  pedidosBebidasAbiertos: false,
 };
 let chartsReady = false;
 
@@ -88,6 +92,24 @@ function initApp() {
   const btnGuardarInv = document.getElementById("guardarInventarioBtn");
   if (btnGuardarInv) {
     btnGuardarInv.addEventListener("click", guardarInventario);
+  }
+  const btnCerrarInventarios = document.getElementById("cerrarInventariosAnterioresBtn");
+  if (btnCerrarInventarios) {
+    btnCerrarInventarios.addEventListener("click", async () => {
+      const confirmar = await showAppDialog({
+        title: "Cerrar inventarios anteriores",
+        message: "Se cerrarán los registros de inventario con fecha anterior a hoy. Se conserva el historial de pedidos y el inventario de hoy no cambia.",
+        confirmText: "Cerrar anteriores",
+        showCancel: true,
+      });
+      if (!confirmar) return;
+      try {
+        const cerrados = await postAndSync("cerrarInventariosAnteriores");
+        showToast(cerrados ? `Se cerraron ${cerrados} registros de inventario anteriores.` : "No había inventarios anteriores abiertos.");
+      } catch (err) {
+        onError(err);
+      }
+    });
   }
   setupConfig();
 
@@ -115,7 +137,7 @@ function setConnStatus(text, cls) {
 }
 
 function setupNav() {
-  document.querySelectorAll(".nav-item").forEach((btn) => {
+  document.querySelectorAll(".nav-item[data-view]").forEach((btn) => {
     btn.addEventListener("click", () => {
       document
         .querySelectorAll(".nav-item")
@@ -149,13 +171,17 @@ async function cargarTodo() {
 
 function onDataLoaded(data) {
   if (!data) return;
-  STATE.config = data.config || { tipos: [] };
+  STATE.config = data.config || { tipos: [], bebidas: [] };
   STATE.pendientes = data.pendientes || [];
   STATE.completados = data.completados || [];
   STATE.resumenSemanal = data.resumenSemanal || [];
   STATE.inventario = data.inventario || [];
   STATE.semanaActual = data.semanaActual || "";
   STATE.semanaActualLabel = data.semanaActualLabel || "";
+  STATE.fechaOperativa = data.fechaOperativa || "";
+  STATE.fechaOperativaLabel = data.fechaOperativaLabel || "";
+  STATE.pedidosTamalesAbiertos = Boolean(data.pedidosTamalesAbiertos);
+  STATE.pedidosBebidasAbiertos = Boolean(data.pedidosBebidasAbiertos);
 
   const weekChip = document.getElementById("currentWeekChip");
   if (weekChip) {
@@ -165,8 +191,8 @@ function onDataLoaded(data) {
     weekChip.setAttribute("aria-label", STATE.semanaActualLabel);
   }
 
-  const invLabel = document.getElementById("inventarioSemanaLabel");
-  if (invLabel) invLabel.textContent = data.semanaActualLabel;
+  const invLabel = document.getElementById("inventarioDiaLabel");
+  if (invLabel) invLabel.textContent = data.fechaOperativaLabel || "hoy";
 
   const dashLabel = document.getElementById("dashboardSemanaLabel");
   if (dashLabel) dashLabel.textContent = (data.semanaActualLabel || "").toLowerCase();
@@ -290,8 +316,9 @@ function actionFeedback(action) {
     crearPedido: ["Creando el pedido…", "Guardando la comanda y reservando el inventario.", "Pedido creado y guardado."],
     editarPedido: ["Guardando cambios…", "Actualizando el pedido y revisando el inventario.", "Cambios del pedido guardados."],
     completarPedido: ["Registrando el pago…", "Actualizando el estado y las ganancias.", "Pago registrado correctamente."],
-    eliminarPedido: ["Eliminando pedido…", "Actualizando el inventario disponible.", "Pedido eliminado."],
-    guardarInventario: ["Guardando inventario…", "Actualizando las cantidades disponibles.", "Inventario guardado."],
+    eliminarPedido: ["Cancelando pedido…", "Actualizando el inventario y guardando el aviso al cliente.", "Pedido cancelado; el aviso quedó disponible para el cliente."],
+    guardarInventario: ["Guardando inventario…", "Actualizando las cantidades del día.", "Inventario del día guardado."],
+    cambiarEstadoPedidos: ["Actualizando pedidos…", "Cambiando si los clientes pueden enviar pedidos.", "Estado de pedidos actualizado."],
     guardarInversion: ["Guardando inversión…", "Actualizando el cierre de la semana.", "Inversión guardada."],
     cerrarSemana: ["Cerrando la semana…", "Guardando el cierre y preparando la siguiente semana.", "Semana cerrada correctamente."],
     guardarConfig: ["Guardando configuración…", "Actualizando los tipos y precios.", "Configuración guardada."],
@@ -314,16 +341,15 @@ async function syncAfterAction(action) {
   }
 
   if (action === "guardarInventario") {
-    STATE.inventario = await apiGet("inventario", { semana: STATE.semanaActual });
-    renderInventario();
-    refreshFormState();
+    const data = await apiGet("dashboard");
+    onDataLoaded(data);
     return;
   }
 
   if (action === "guardarConfig") {
     const [config, inventario] = await Promise.all([
       apiGet("config"),
-      apiGet("inventario", { semana: STATE.semanaActual }),
+      apiGet("inventario", { fecha: STATE.fechaOperativa }),
     ]);
     STATE.config = config;
     STATE.inventario = inventario;
@@ -336,7 +362,7 @@ async function syncAfterAction(action) {
 
   const [pedidos, inventario] = await Promise.all([
     apiGet("pedidos"),
-    apiGet("inventario", { semana: STATE.semanaActual }),
+    apiGet("inventario", { fecha: STATE.fechaOperativa }),
   ]);
   STATE.pendientes = pedidos.filter((p) => p.estado === "Pendiente");
   STATE.completados = pedidos.filter((p) => p.estado === "Completado");

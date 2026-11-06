@@ -12,6 +12,10 @@ CREATE TABLE IF NOT EXISTS config (
     {"tipo": "Dulce", "precio": 15},
     {"tipo": "Rajas con queso", "precio": 15}
   ]'::jsonb,
+  bebidas jsonb NOT NULL DEFAULT '[
+    {"tipo": "Atole chico (500 ml)", "precio": 0, "activo": false},
+    {"tipo": "Atole grande (1 L)", "precio": 0, "activo": false}
+  ]'::jsonb,
   updated_at timestamptz DEFAULT now()
 );
 
