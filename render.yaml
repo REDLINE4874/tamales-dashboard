@@ -5,3 +5,10 @@ services:
     rootDir: frontend
     buildCommand: ""
     staticPublishPath: .
+
+  - type: web
+    name: tamales-pedidos
+    runtime: static
+    rootDir: frontend-pedidos
+    buildCommand: ""
+    staticPublishPath: .

@@ -74,10 +74,12 @@ El archivo `render.yaml` contiene la configuración para publicar el frontend co
 
 ### Pedidos de clientes
 
-La vista pública está en `frontend/pedido.html` y se publica junto con el panel en el mismo sitio:
+La vista pública se publica como un sitio estático independiente desde `frontend-pedidos/`; el panel continúa en `frontend/`:
 
-- Panel: `/`
-- Clientes: `/pedido.html`
+- Panel: URL del servicio `tamales-dashboard` en Render.
+- Clientes: URL del servicio `tamales-pedidos` en Render.
+
+El archivo [`render.yaml`](./render.yaml) define ambos servicios. Al crear o sincronizar el Blueprint en Render, publica cada servicio desde su propio directorio raíz. La página de clientes tiene un `index.html` propio y una copia de los recursos que necesita, además de la misma configuración pública de Supabase.
 
 Ambas vistas usan el mismo proyecto de Supabase. Después de instalar la base inicial con `supabase/tamales.sql`, ejecuta `supabase/pedidos_publicos.sql` y luego `supabase/inventario_diario.sql` desde el SQL Editor de Supabase. Si ya ejecutaste versiones anteriores, vuelve a ejecutar los archivos en ese orden para incorporar los cambios.
 

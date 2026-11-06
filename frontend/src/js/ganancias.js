@@ -163,254 +163,144 @@ window.addEventListener("resize", () => {
 
 function renderInvestCurrent() {
   const el = document.getElementById("investCardCurrent");
-  const actual = STATE.resumenSemanal.find(
-    (s) => s.semana === STATE.semanaActual,
-  );
-  const gananciaBruta = actual ? actual.total : 0;
-
-  if (actual && actual.registrada) {
-    el.innerHTML = `
-      <h3>Cierre de ${STATE.semanaActualLabel}</h3>
-      <div class="invest-summary">
-        <span>Ganancia bruta: <strong class="mono">$${gananciaBruta.toFixed(0)}</strong></span>
-        <span>Inversión: <strong class="mono">$${actual.inversion.toFixed(0)}</strong></span>
-        <span class="utilidad ${actual.utilidad >= 0 ? "pos" : "neg"}">Utilidad: <strong class="mono">$${actual.utilidad.toFixed(0)}</strong></span>
-      </div>
-      <div class="invest-actions">
-        <button class="btn-ghost" onclick="cerrarSemanaActual()">Cerrar semana y reiniciar inventario</button>
-      </div>
-    `;
+  if (!el) return;
+  const fecha = STATE.fechaOperativa;
+  const tieneInventario = STATE.diasConInventario.includes(fecha);
+  const cierre = STATE.cierresDiarios.find((item) => item.fecha_operativa === fecha);
+  const pedidos = STATE.completados.filter((pedido) => pedido.fechaOperativa === fecha);
+  const ventas = pedidos.reduce((total, pedido) => total + Number(pedido.montoCobrado || 0), 0);
+  const label = fecha ? new Intl.DateTimeFormat("es-MX", { weekday: "long", day: "2-digit", month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(`${fecha}T12:00:00Z`)) : "hoy";
+  if (!tieneInventario) {
+    el.innerHTML = `<h3>Cierre del ${label}</h3><p class="invest-hint">Guarda el inventario del día para habilitar su cierre.</p>`;
+  } else if (cierre) {
+    const utilidad = ventas - Number(cierre.inversion || 0);
+    el.innerHTML = `<h3>Cierre del ${label}</h3><div class="invest-summary"><span>Ventas: <strong class="mono">$${ventas.toFixed(2)}</strong></span><span>Inversión: <strong class="mono">$${Number(cierre.inversion).toFixed(2)}</strong></span><span class="utilidad ${utilidad >= 0 ? "pos" : "neg"}">Utilidad: <strong class="mono">$${utilidad.toFixed(2)}</strong></span></div>`;
   } else {
-    el.innerHTML = `
-      <h3>Cierre de ${STATE.semanaActualLabel}</h3>
-      <p class="invest-hint">Ganancia bruta hasta ahora: <strong class="mono">$${gananciaBruta.toFixed(0)}</strong>. Registra tu inversión para calcular la utilidad.</p>
-      <div class="invest-form">
-        <input type="number" class="invest-input" id="invest-input-current" placeholder="Inversión realizada" step="0.01">
-        <button class="btn-primary" onclick="registrarInversion('${STATE.semanaActual}', 'current')">Registrar inversión</button>
-      </div>
-      <div class="invest-actions">
-        <button class="btn-ghost" onclick="cerrarSemanaActual()">Cerrar semana y reiniciar inventario</button>
-      </div>
-    `;
+    el.innerHTML = `<h3>Cierre del ${label}</h3><p class="invest-hint">Ventas completadas: <strong class="mono">$${ventas.toFixed(2)}</strong>. Registra la inversión de este día.</p><div class="invest-form"><input type="number" min="0" class="invest-input" id="invest-input-current" placeholder="Inversión del día" step="0.01"><button class="btn-primary" onclick='registrarCierreDiario("${fecha}")'>Cerrar día</button></div>`;
   }
 }
 
-async function registrarInversion(semana, refId) {
-  const input = document.getElementById("invest-input-" + refId);
-  const inversion = Number(input.value);
-  if (isNaN(inversion) || input.value === "") {
-    await showAppDialog({
-      title: "Falta la inversión",
-      message: "Escribe el monto invertido para registrar el cierre.",
-      confirmText: "Entendido",
-    });
-    return;
-  }
-  try {
-    await postAndSync("guardarInversion", { semana, inversion });
-  } catch (err) {
-    onError(err);
-  }
-}
-
-async function cerrarSemanaActual() {
+async function registrarCierreDiario(fecha) {
   const input = document.getElementById("invest-input-current");
-  const inversion = input && input.value !== "" ? Number(input.value) : null;
-  if (input && input.value !== "" && Number.isNaN(inversion)) {
-    await showAppDialog({
-      title: "Monto inválido",
-      message: "Escribe un monto de inversión numérico antes de cerrar la semana.",
-      confirmText: "Entendido",
-    });
+  if (!input || input.value === "" || Number(input.value) < 0 || !Number.isFinite(Number(input.value))) {
+    await showAppDialog({ title: "Inversión pendiente", message: "Escribe una inversión válida para cerrar este día.", confirmText: "Entendido" });
     return;
   }
-  const confirmar = await showAppDialog({
-    title: "Cerrar semana",
-    message: `Se guardarán las ganancias de ${STATE.semanaActualLabel} y se iniciará una nueva semana con el inventario en cero. ¿Deseas continuar?`,
-    confirmText: "Sí, cerrar semana",
-    showCancel: true,
-    danger: true,
-  });
-  if (!confirmar) return;
   try {
-    await postAndSync("cerrarSemana", { semana: STATE.semanaActual, inversion });
-  } catch (err) {
-    onError(err);
-  }
+    await postAndSync("guardarCierreDiario", { fecha, inversion: Number(input.value) });
+  } catch (err) { onError(err); }
 }
-
-/* ==========================================================
-   HISTORICO
-   ========================================================== */
-
 function renderHistorico() {
   const wrap = document.getElementById("historicoList");
   const monthFilter = document.getElementById("historyMonthFilter");
   const yearFilter = document.getElementById("historyYearFilter");
-  const currentDate = new Date();
-  const currentMonth = String(currentDate.getMonth() + 1).padStart(2, "0");
-  const currentYear = String(currentDate.getFullYear());
+  if (!wrap || !monthFilter || !yearFilter) return;
+  const now = new Date();
+  const currentMonth = String(now.getMonth() + 1).padStart(2, "0");
+  const currentYear = String(now.getFullYear());
   const previousMonth = monthFilter.value;
   const previousYear = yearFilter.value;
-  const records = [];
-  const years = new Set();
-  const monthsByYear = new Map();
-
-  STATE.resumenSemanal.forEach((summary) => {
-    const match = /^(\d{4})-(\d{2})-S\d+$/.exec(summary.semana);
-    if (!match) return;
-    const [, year, month] = match;
-    records.push({ summary, year, month });
-    years.add(year);
-    if (!monthsByYear.has(year)) monthsByYear.set(year, new Set());
-    monthsByYear.get(year).add(month);
+  const cierreByDate = new Map(STATE.cierresDiarios.map((item) => [item.fecha_operativa, item]));
+  const records = STATE.diasConInventario.map((fecha) => {
+    const pedidos = STATE.completados.filter((pedido) => pedido.fechaOperativa === fecha);
+    const ventas = pedidos.reduce((total, pedido) => total + Number(pedido.montoCobrado || 0), 0);
+    const cierre = cierreByDate.get(fecha);
+    return { fecha, year: fecha.slice(0, 4), month: fecha.slice(5, 7), pedidos, ventas, cierre, inversion: cierre ? Number(cierre.inversion || 0) : null };
   });
-
-  const sortedYears = [...years].sort((a, b) => b.localeCompare(a));
-  const selectedYear = years.has(previousYear)
-    ? previousYear
-    : years.has(currentYear)
-      ? currentYear
-      : sortedYears[0] || currentYear;
-  const availableMonths = [...(monthsByYear.get(selectedYear) || [])].sort(
-    (a, b) => b.localeCompare(a),
-  );
-  const selectedMonth = availableMonths.includes(previousMonth)
-    ? previousMonth
-    : availableMonths.includes(currentMonth) && selectedYear === currentYear
-      ? currentMonth
-      : availableMonths[0] || "";
-
-  monthFilter.innerHTML = availableMonths.length
-    ? availableMonths.map((month) => {
-    const label = new Intl.DateTimeFormat("es-MX", { month: "long" }).format(
-      new Date(2000, Number(month) - 1, 1),
-    );
-    return `<option value="${month}">${label}</option>`;
-    }).join("")
-    : '<option value="" disabled>Sin registros</option>';
-  yearFilter.innerHTML = sortedYears
-    .map((year) => `<option value="${year}">${year}</option>`)
-    .join("") || `<option value="${currentYear}">${currentYear}</option>`;
+  const weeklyRecords = STATE.resumenSemanal
+    .filter((item) => item.registrada)
+    .map((summary) => {
+      const match = /^(\d{4})-(\d{2})-S\d+$/.exec(summary.semana);
+      return match ? { ...summary, year: match[1], month: match[2] } : null;
+    })
+    .filter(Boolean);
+  const years = [...new Set([...records.map((item) => item.year), ...weeklyRecords.map((item) => item.year)])].sort((a, b) => b.localeCompare(a));
+  const selectedYear = years.includes(previousYear) ? previousYear : years.includes(currentYear) ? currentYear : years[0] || currentYear;
+  const months = [...new Set([
+    ...records.filter((item) => item.year === selectedYear).map((item) => item.month),
+    ...weeklyRecords.filter((item) => item.year === selectedYear).map((item) => item.month),
+  ])].sort((a, b) => b.localeCompare(a));
+  const selectedMonth = months.includes(previousMonth) ? previousMonth : months.includes(currentMonth) && selectedYear === currentYear ? currentMonth : months[0] || "";
+  monthFilter.innerHTML = months.length ? months.map((month) => `<option value="${month}">${new Intl.DateTimeFormat("es-MX", { month: "long" }).format(new Date(2000, Number(month) - 1, 1))}</option>`).join("") : '<option value="" disabled>Sin registros</option>';
+  yearFilter.innerHTML = years.map((year) => `<option value="${year}">${year}</option>`).join("") || `<option value="${currentYear}">${currentYear}</option>`;
   monthFilter.value = selectedMonth;
   yearFilter.value = selectedYear;
-  monthFilter.disabled = availableMonths.length === 0;
-  yearFilter.disabled = sortedYears.length === 0;
+  monthFilter.disabled = months.length === 0;
+  yearFilter.disabled = years.length === 0;
   refreshCustomSelect(monthFilter);
   refreshCustomSelect(yearFilter);
 
-  const semanas = records
-    .filter(
-      ({ year, month }) =>
-        year === yearFilter.value && month === monthFilter.value,
-    )
-    .map(({ summary }) => summary)
-    .sort((a, b) => b.semana.localeCompare(a.semana));
+  const days = records.filter((item) => item.year === yearFilter.value && item.month === monthFilter.value).sort((a, b) => b.fecha.localeCompare(a.fecha));
+  const totalVentas = days.reduce((total, item) => total + item.ventas, 0);
+  const totalInversion = days.reduce((total, item) => total + (item.inversion ?? 0), 0);
+  const pendientes = days.filter((item) => item.inversion == null).length;
+  const utilidad = totalVentas - totalInversion;
+  document.getElementById("historyMonthlySummary").innerHTML = `<div class="history-monthly-card"><span class="stat-label">Ventas del mes</span><strong class="stat-value mono">$${totalVentas.toFixed(2)}</strong></div><div class="history-monthly-card"><span class="stat-label">${pendientes ? "Utilidad provisional" : "Utilidad del mes"}</span><strong class="stat-value mono ${utilidad >= 0 ? "pos" : "neg"}">$${utilidad.toFixed(2)}</strong>${pendientes ? `<span class="history-monthly-note">Falta${pendientes === 1 ? "" : "n"} cerrar ${pendientes} día${pendientes === 1 ? "" : "s"} con inventario.</span>` : ""}</div>`;
 
-  const ventasMes = semanas.reduce(
-    (total, semana) => total + Number(semana.total || 0),
-    0,
-  );
-  const inversionRegistrada = semanas.reduce(
-    (total, semana) =>
-      total + (semana.registrada ? Number(semana.inversion || 0) : 0),
-    0,
-  );
-  const cierresPendientes = semanas.filter((semana) => !semana.registrada).length;
-  const utilidadMes = ventasMes - inversionRegistrada;
-  document.getElementById("historyMonthlySummary").innerHTML = `
-    <div class="history-monthly-card">
-      <span class="stat-label">Ventas del mes</span>
-      <strong class="stat-value mono">$${ventasMes.toFixed(0)}</strong>
-    </div>
-    <div class="history-monthly-card">
-      <span class="stat-label">${cierresPendientes ? "Utilidad provisional" : "Utilidad del mes"}</span>
-      <strong class="stat-value mono ${utilidadMes >= 0 ? "pos" : "neg"}">$${utilidadMes.toFixed(0)}</strong>
-      ${cierresPendientes ? `<span class="history-monthly-note">Falta${cierresPendientes === 1 ? "" : "n"} registrar ${cierresPendientes} cierre${cierresPendientes === 1 ? "" : "s"} semanal${cierresPendientes === 1 ? "" : "es"}.</span>` : ""}
-    </div>
-  `;
-
-  if (!semanas.length) {
-    wrap.innerHTML =
-      '<div class="empty-state">No hay ventas registradas para el mes y año seleccionados.</div>';
+  if (!days.length) {
+    wrap.innerHTML = '<div class="empty-state">No hay días con inventario en el mes y año seleccionados.</div>';
   } else {
-    const rows = semanas
-      .map((summary, index) => {
-        const pedidosSemana = STATE.completados.filter(
-          (pedido) => pedido.semana === summary.semana,
-        );
-        const utilidad = summary.registrada
-          ? `<span class="utilidad ${summary.utilidad >= 0 ? "pos" : "neg"} mono">$${summary.utilidad.toFixed(0)}</span>`
-          : '<span class="utilidad-pill pending">Sin cerrar</span>';
-        const detalleInversion = summary.registrada
-          ? `<div class="invest-summary">
-               <span>Inversión: <strong class="mono">$${summary.inversion.toFixed(0)}</strong></span>
-               <span class="utilidad ${summary.utilidad >= 0 ? "pos" : "neg"}">Utilidad: <strong class="mono">$${summary.utilidad.toFixed(0)}</strong></span>
-             </div>`
-          : `<div class="invest-form">
-               <input type="number" class="invest-input" id="invest-input-${index}" placeholder="Inversión de la semana" step="0.01">
-               <button class="btn-ghost" onclick="registrarInversion('${summary.semana}', ${index})">Registrar inversión</button>
-             </div>`;
-        const pedidosHtml = pedidosSemana.length
-          ? pedidosSemana
-              .map(
-                (pedido) => `
-                  <div class="pedido-row">
-                    <div>
-                      <div class="p-cliente">${escapeHtml(pedido.cliente)}</div>
-                      <div class="p-detalle">${pedido.detalle.map((item) => escapeHtml(item.tipo) + " x" + item.cantidad).join(", ")}</div>
-                    </div>
-                    <div class="mono">$${Number(pedido.montoCobrado).toFixed(0)}</div>
-                  </div>
-                `,
-              )
-              .join("")
-          : '<div class="empty-state">No hay pedidos completados esta semana.</div>';
-
-        return `
-          <tr>
-            <th scope="row">${summary.label}</th>
-            <td data-label="Pedidos">${summary.pedidos}</td>
-            <td data-label="Ventas" class="mono">$${summary.total.toFixed(0)}</td>
-            <td data-label="Inversión">${summary.registrada ? `$${summary.inversion.toFixed(0)}` : "—"}</td>
-            <td data-label="Utilidad">${utilidad}</td>
-            <td data-label="Pedidos completados">
-              <button type="button" class="btn-ghost history-detail-toggle" aria-expanded="false" aria-controls="week-detail-${index}" onclick="toggleWeek(${index})">Ver detalle</button>
-            </td>
-          </tr>
-          <tr class="history-detail-row" id="week-detail-${index}">
-            <td colspan="6" data-label="">
-              <div class="history-week-detail">
-                ${detalleInversion}
-                ${pedidosHtml}
-              </div>
-            </td>
-          </tr>
-        `;
-      })
-      .join("");
-
-    wrap.innerHTML = `
-      <div class="history-table-wrap">
-        <table class="history-table">
-          <thead>
-            <tr><th>Semana</th><th>Pedidos</th><th>Ventas</th><th>Inversión</th><th>Utilidad</th><th>Detalle</th></tr>
-          </thead>
-          <tbody>${rows}</tbody>
-        </table>
-      </div>
-    `;
+    const rows = days.map((day, index) => {
+      const utilidadDia = day.inversion == null ? null : day.ventas - day.inversion;
+      const inversionHtml = day.inversion == null
+        ? `<div class="invest-form"><input type="number" min="0" class="invest-input" id="daily-invest-${index}" placeholder="Inversión del día" step="0.01"><button class="btn-ghost" onclick='registrarCierreHistorico("${day.fecha}", ${index})'>Cerrar día</button></div>`
+        : `$${day.inversion.toFixed(2)}`;
+      const utilidadHtml = utilidadDia == null ? '<span class="utilidad-pill pending">Pendiente</span>' : `<span class="utilidad ${utilidadDia >= 0 ? "pos" : "neg"} mono">$${utilidadDia.toFixed(2)}</span>`;
+      const pedidosHtml = day.pedidos.length ? day.pedidos.map((pedido) => `<div class="pedido-row"><div><div class="p-cliente">${escapeHtml(pedido.cliente)}</div><div class="p-detalle">${pedido.detalle.map((item) => escapeHtml(item.tipo) + " x" + item.cantidad).join(", ")}</div></div><div class="mono">$${Number(pedido.montoCobrado || 0).toFixed(2)}</div></div>`).join("") : '<div class="empty-state">No hay pedidos completados este día.</div>';
+      const dateLabel = new Intl.DateTimeFormat("es-MX", { weekday: "long", day: "2-digit", month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(`${day.fecha}T12:00:00Z`));
+      return `<tr><th scope="row">${dateLabel}</th><td data-label="Pedidos">${day.pedidos.length}</td><td data-label="Ventas" class="mono">$${day.ventas.toFixed(2)}</td><td data-label="Inversión">${inversionHtml}</td><td data-label="Utilidad">${utilidadHtml}</td><td data-label="Detalle"><button type="button" class="btn-ghost history-detail-toggle" aria-expanded="false" aria-controls="day-detail-${index}" onclick="toggleDay(${index})">Ver detalle</button></td></tr><tr class="history-detail-row" id="day-detail-${index}"><td colspan="6"><div class="history-week-detail">${pedidosHtml}</div></td></tr>`;
+    }).join("");
+    wrap.innerHTML = `<div class="history-table-wrap"><table class="history-table"><thead><tr><th>Día con inventario</th><th>Pedidos</th><th>Ventas</th><th>Inversión</th><th>Utilidad</th><th>Detalle</th></tr></thead><tbody>${rows}</tbody></table></div>`;
   }
-
   monthFilter.onchange = renderHistorico;
   yearFilter.onchange = renderHistorico;
+  renderHistoricoSemanal(weeklyRecords, yearFilter.value, monthFilter.value);
 }
 
-function toggleWeek(i) {
-  const detail = document.getElementById("week-detail-" + i);
+function renderHistoricoSemanal(records, year, month) {
+  const wrap = document.getElementById("historicoSemanalList");
+  if (!wrap) return;
+  const weeks = records
+    .filter((item) => item.year === year && item.month === month)
+    .sort((a, b) => b.semana.localeCompare(a.semana));
+  if (!weeks.length) {
+    wrap.innerHTML = '<div class="empty-state">No hay cierres semanales guardados para este mes.</div>';
+    return;
+  }
+  const rows = weeks.map((summary, index) => {
+    const pedidos = STATE.completados.filter((pedido) => pedido.semana === summary.semana);
+    const detalle = pedidos.length
+      ? pedidos.map((pedido) => `<div class="pedido-row"><div><div class="p-cliente">${escapeHtml(pedido.cliente)}</div><div class="p-detalle">${pedido.detalle.map((item) => `${escapeHtml(item.tipo)} x${item.cantidad}`).join(", ")}</div></div><div class="mono">$${Number(pedido.montoCobrado || 0).toFixed(2)}</div></div>`).join("")
+      : '<div class="empty-state">No hay pedidos completados registrados en esta semana.</div>';
+    const utilidad = Number(summary.total || 0) - Number(summary.inversion || 0);
+    return `<tr><th scope="row">${escapeHtml(summary.label)}</th><td data-label="Pedidos">${summary.pedidos}</td><td data-label="Ventas" class="mono">$${Number(summary.total).toFixed(2)}</td><td data-label="Inversión" class="mono">$${Number(summary.inversion).toFixed(2)}</td><td data-label="Utilidad"><span class="utilidad ${utilidad >= 0 ? "pos" : "neg"} mono">$${utilidad.toFixed(2)}</span></td><td data-label="Detalle"><button type="button" class="btn-ghost history-detail-toggle" aria-expanded="false" aria-controls="week-archive-detail-${index}" onclick="toggleWeeklyArchive(${index})">Ver detalle</button></td></tr><tr class="history-detail-row" id="week-archive-detail-${index}"><td colspan="6"><div class="history-week-detail">${detalle}</div></td></tr>`;
+  }).join("");
+  wrap.innerHTML = `<div class="history-table-wrap"><table class="history-table"><thead><tr><th>Semana (archivo)</th><th>Pedidos</th><th>Ventas</th><th>Inversión</th><th>Utilidad</th><th>Detalle</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+}
+
+function toggleWeeklyArchive(index) {
+  const detail = document.getElementById("week-archive-detail-" + index);
+  const isOpen = detail.classList.toggle("open");
+  const toggle = document.querySelector(`.history-detail-toggle[aria-controls="week-archive-detail-${index}"]`);
+  toggle.setAttribute("aria-expanded", String(isOpen));
+  toggle.textContent = isOpen ? "Ocultar detalle" : "Ver detalle";
+}
+
+async function registrarCierreHistorico(fecha, index) {
+  const input = document.getElementById("daily-invest-" + index);
+  if (!input || input.value === "" || Number(input.value) < 0 || !Number.isFinite(Number(input.value))) {
+    await showAppDialog({ title: "Inversión pendiente", message: "Escribe una inversión válida para cerrar este día.", confirmText: "Entendido" });
+    return;
+  }
+  try {
+    await postAndSync("guardarCierreDiario", { fecha, inversion: Number(input.value) });
+  } catch (err) { onError(err); }
+}
+function toggleDay(i) {
+  const detail = document.getElementById("day-detail-" + i);
   const isOpen = detail.classList.toggle("open");
   const toggle = document.querySelector(
-    `.history-detail-toggle[aria-controls="week-detail-${i}"]`,
+    `.history-detail-toggle[aria-controls="day-detail-${i}"]`,
   );
   toggle.setAttribute("aria-expanded", String(isOpen));
   toggle.textContent = isOpen ? "Ocultar detalle" : "Ver detalle";

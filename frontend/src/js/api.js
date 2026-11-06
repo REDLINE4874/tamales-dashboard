@@ -340,36 +340,37 @@ async function eliminarPedidoEnDb(id, motivo) {
   if (error) throw error;
 }
 
-async function guardarInversion(semana, inversion) {
-  const sb = getSbClient();
-  sbCheck(sb);
-  const { error } = await sb.from("cierres").upsert(
-    { semana, inversion: Number(inversion), updated_at: new Date().toISOString() },
-    { onConflict: "semana" }
-  );
-  if (error) throw error;
-}
-
-async function cerrarSemana(semana, inversion) {
-  const sb = getSbClient();
-  sbCheck(sb);
-  const semanaActual = semana || (await getSemanaActiva());
-  const semanaSiguiente = getSemanaSiguiente(semanaActual);
-  const { error } = await sb.rpc("cerrar_semana_panel", {
-    p_semana: semanaActual,
-    p_siguiente: semanaSiguiente,
-    p_inversion: inversion == null || inversion === "" ? null : Number(inversion),
-  });
-  if (error) throw error;
-  return { semanaCerrada: semanaActual, semanaNueva: semanaSiguiente };
-}
-
 async function obtenerCierres() {
   const sb = getSbClient();
   sbCheck(sb);
   const { data, error } = await sb.from("cierres").select("semana, inversion");
   if (error) throw error;
   return data || [];
+}
+
+async function obtenerCierresDiarios() {
+  const sb = getSbClient();
+  sbCheck(sb);
+  const [{ data: cierres, error: cierreError }, { data: inventario, error: inventarioError }] = await Promise.all([
+    sb.from("cierres_diarios").select("fecha_operativa, inversion"),
+    sb.from("inventario").select("fecha_operativa").not("fecha_operativa", "is", null),
+  ]);
+  if (cierreError) throw cierreError;
+  if (inventarioError) throw inventarioError;
+  return {
+    cierres: cierres || [],
+    diasConInventario: [...new Set((inventario || []).map((row) => row.fecha_operativa).filter(Boolean))].sort(),
+  };
+}
+
+async function guardarCierreDiario(fecha, inversion) {
+  const sb = getSbClient();
+  sbCheck(sb);
+  const { error } = await sb.rpc("guardar_cierre_diario", {
+    p_fecha: fecha,
+    p_inversion: Number(inversion),
+  });
+  if (error) throw error;
 }
 
 async function obtenerResumenSemanal(pedidos, cierresData) {
@@ -383,6 +384,9 @@ async function obtenerResumenSemanal(pedidos, cierresData) {
 
   const cierres = {};
   (cierresData || []).forEach((c) => { cierres[c.semana] = { inversion: Number(c.inversion) }; });
+  Object.keys(cierres).forEach((semana) => {
+    if (!map[semana]) map[semana] = { semana, total: 0, pedidos: 0 };
+  });
 
   return Object.values(map)
     .map((r) => {
@@ -405,12 +409,13 @@ async function obtenerResumenSemanal(pedidos, cierresData) {
 /* ── Dashboard Completo ── */
 
 async function getDashboardData() {
-  const [todos, semanaActual, config, cierresData, operativo] = await Promise.all([
+  const [todos, semanaActual, config, cierresData, operativo, resumenDiario] = await Promise.all([
     listarPedidos(),
     getSemanaActiva(),
     getConfig(),
     obtenerCierres(),
     getEstadoOperativo(),
+    obtenerCierresDiarios(),
   ]);
   const [inventario, resumenSemanal] = await Promise.all([
     getInventarioSemana(operativo.fecha, todos, config),
@@ -422,6 +427,8 @@ async function getDashboardData() {
     completados: todos.filter((p) => p.estado === "Completado"),
     pendientes: todos.filter((p) => p.estado === "Pendiente"),
     resumenSemanal,
+    cierresDiarios: resumenDiario.cierres,
+    diasConInventario: resumenDiario.diasConInventario,
     config,
     inventario,
     semanaActual,
@@ -478,12 +485,9 @@ async function apiPost(action, payload = {}) {
       break;
     case "cerrarInventariosAnteriores":
       return await cerrarInventariosAnteriores();
-    case "guardarInversion":
-      await guardarInversion(payload.semana, payload.inversion);
-      break;
-    case "cerrarSemana":
-      await cerrarSemana(payload.semana, payload.inversion);
-      break;
+      case "guardarCierreDiario":
+        await guardarCierreDiario(payload.fecha, payload.inversion);
+        break;
     default:
       throw new Error("Acción POST no reconocida: " + action);
   }

@@ -174,7 +174,7 @@
         <section id="view-dashboard" class="view">
           <header class="view-head">
             <h1>Ganancias</h1>
-            <p>Resumen de <span id="dashboardSemanaLabel">esta semana</span></p>
+            <p>Resumen de ventas por semana</p>
           </header>
           <div class="stats-row">
             <div class="stat-card">
@@ -212,7 +212,7 @@
         <section id="view-historico" class="view">
           <header class="view-head">
             <h1>Histórico de ventas</h1>
-            <p>Consulta las semanas en una tabla filtrando por mes y año</p>
+            <p>Consulta los días con inventario registrados, filtrando por mes y año</p>
           </header>
           <div class="history-filters">
             <label for="historyMonthFilter">Mes</label>
@@ -222,6 +222,13 @@
           </div>
           <div id="historyMonthlySummary" class="history-monthly-summary"></div>
           <div id="historicoList"></div>
+          <section class="weekly-archive-section" aria-labelledby="weeklyArchiveTitle">
+            <header class="view-head">
+              <h2 id="weeklyArchiveTitle">Cierres semanales anteriores</h2>
+              <p>Archivo de cierres semanales guardados antes del cambio a cierres diarios.</p>
+            </header>
+            <div id="historicoSemanalList"></div>
+          </section>
         </section>
 
         <!-- TIPOS Y PRECIOS -->

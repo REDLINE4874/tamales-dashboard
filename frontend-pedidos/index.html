@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f7f8f6" />
+    <link rel="icon" type="image/svg+xml" href="icons/favicon.svg" />
+    <meta
+      name="description"
+      content="Consulta el menú y haz tu pedido de tamales."
+    />
+    <title>Haz tu pedido de tamales</title>
+    <link rel="stylesheet" href="src/css/pedido-cliente.css" />
+    <link rel="stylesheet" href="src/css/pedido-mobile.css" />
+    <link rel="stylesheet" href="src/css/pedido-app.css" />
+    <link rel="stylesheet" href="src/css/pedido-app-fixes.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="./" aria-label="Tamales, inicio"
+        ><span class="brand-mark">T</span
+        ><span>Tamales <small>hechos con cariño</small></span></a
+      >
+      <div class="order-nav">
+        <span
+          class="open-badge is-loading"
+          id="orderStatusBadge"
+          role="status"
+          aria-live="polite"
+          ><i></i><strong id="menuMessage">Consultando pedidos…</strong></span
+        ><button
+          class="refresh-icon"
+          id="refreshMenu"
+          type="button"
+          aria-label="Actualizar estado de pedidos"
+        >
+          ↻
+        </button>
+      </div>
+    </header>
+
+    <main class="page">
+      <section class="order-lookup">
+        <button class="lookup-trigger" id="openOrderLookup" type="button">
+          <span class="lookup-trigger-icon" aria-hidden="true">⌕</span
+          ><span
+            ><strong>Consulta tu pedido</strong
+            ><small>Revisa su estado o el motivo de cancelación</small></span
+          ><span class="lookup-trigger-arrow" aria-hidden="true">→</span>
+        </button>
+      </section>
+      <section class="intro" id="customerIntro" hidden>
+        <div class="delivery-info" id="deliveryInfo">
+          <span class="pin-icon">⌖</span
+          ><span
+            ><small>DISPONIBILIDAD</small><strong id="menuDate"></strong
+          ></span>
+        </div>
+        <h1>¿Qué se te <em>antoja?</em></h1>
+        <p>Tamales y atole, recién hechos para ti.</p>
+      </section>
+      <section class="closed-notice" id="closedNotice" hidden>
+        <span class="closed-notice__icon">◷</span>
+        <h1 id="closedNoticeTitle">Por ahora no estamos tomando pedidos</h1>
+        <p id="closedNoticeMessage">
+          Vuelve a consultar más tarde para ver el menú y la disponibilidad.
+        </p>
+        <button class="primary" id="refreshClosedMenu" type="button">
+          Consultar de nuevo
+        </button>
+      </section>
+      <section
+        class="menu-card"
+        id="menuContent"
+        aria-labelledby="menuTitle"
+        hidden
+      >
+        <div class="search-box">
+          <span aria-hidden="true">⌕</span
+          ><input
+            id="menuSearch"
+            type="search"
+            placeholder="Buscar en el menú"
+            autocomplete="off"
+            aria-label="Buscar en el menú"
+          />
+        </div>
+        <nav class="category-chips" aria-label="Categorías">
+          <button
+            type="button"
+            class="category-chip active"
+            data-category="todos"
+          >
+            Todo</button
+          ><button type="button" class="category-chip" data-category="tamal">
+            Tamales</button
+          ><button type="button" class="category-chip" data-category="bebida">
+            Bebidas
+          </button>
+        </nav>
+        <h2 class="menu-heading" id="menuTitle">Nuestro menú</h2>
+        <p class="menu-empty" id="menuEmpty" hidden>
+          No encontramos productos con esa búsqueda.
+        </p>
+        <section id="tamalesSection">
+          <h3 class="menu-category">Tamales</h3>
+          <div id="menuList" class="menu-list"></div>
+        </section>
+        <section id="drinksSection" hidden>
+          <h3 class="menu-category">Bebidas</h3>
+          <div id="drinksList" class="menu-list"></div>
+        </section>
+        <div class="cart-bar" id="cartBar" hidden>
+          <div class="cart-summary-icon" aria-hidden="true">🛍</div>
+          <div class="cart-copy">
+            <span id="cartItemCount">Tu carrito</span
+            ><strong id="cartSummary">$0</strong>
+          </div>
+          <button class="primary" id="startCheckout" type="button" disabled>
+            Ver pedido <span aria-hidden="true">→</span>
+          </button>
+        </div>
+      </section>
+      <section
+        class="card checkout-card"
+        id="checkout"
+        hidden
+        aria-labelledby="checkoutTitle"
+      >
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">CASI LISTO</p>
+            <h2 id="checkoutTitle">Confirma tu pedido</h2>
+          </div>
+          <div class="timer" id="timer" aria-live="polite">10:00</div>
+        </div>
+        <p class="muted">
+          Tus tamales están apartados temporalmente. Envía el pedido antes de
+          que termine el tiempo.
+        </p>
+        <div id="checkoutSummary" class="checkout-summary"></div>
+        <form id="orderForm">
+          <label
+            >Tu nombre<input
+              id="customerName"
+              name="name"
+              autocomplete="name"
+              required
+              minlength="2"
+              maxlength="100"
+              placeholder="¿Cómo te llamas?" /></label
+          ><label
+            >Teléfono o WhatsApp<input
+              id="customerPhone"
+              name="tel"
+              type="tel"
+              autocomplete="tel"
+              required
+              minlength="8"
+              maxlength="24"
+              placeholder="Para confirmar los detalles"
+          /></label>
+          <p class="privacy-note">
+            Guardaremos estos datos en este navegador para que tu próximo pedido
+            sea más rápido.
+          </p>
+          <p id="checkoutMessage" class="form-message" role="alert"></p>
+          <button class="primary submit" id="submitOrder" type="submit">
+            Enviar mi pedido
+          </button>
+        </form>
+        <button class="text-button cancel" id="cancelHold" type="button">
+          Cancelar apartado
+        </button>
+      </section>
+      <section class="success-card" id="success" hidden aria-live="polite">
+        <span class="success-icon">✓</span>
+        <p class="eyebrow">PEDIDO ENVIADO</p>
+        <h2>¡Gracias por tu pedido!</h2>
+        <p>Ya lo recibimos. Guarda este folio para cualquier consulta:</p>
+        <strong class="folio" id="orderFolio"></strong>
+        <p>Nos pondremos en contacto contigo para confirmar los detalles.</p>
+        <button class="primary" id="newOrder" type="button">
+          Hacer otro pedido
+        </button>
+      </section>
+
+      <dialog
+        class="order-lookup-dialog"
+        id="orderLookupDialog"
+        aria-labelledby="orderLookupTitle"
+      >
+        <div class="order-lookup-head">
+          <div>
+            <p class="eyebrow">SEGUIMIENTO</p>
+            <h2 id="orderLookupTitle">Consulta tu pedido</h2>
+          </div>
+          <button
+            class="lookup-close"
+            id="closeOrderLookup"
+            type="button"
+            aria-label="Cerrar"
+          >
+            ×
+          </button>
+        </div>
+        <p>
+          Escribe el folio y el teléfono que registraste. Aquí verás el motivo
+          si el pedido fue cancelado.
+        </p>
+        <form id="orderLookupForm">
+          <label
+            >Folio<input
+              id="lookupFolio"
+              autocomplete="off"
+              maxlength="8"
+              minlength="8"
+              required
+              placeholder="Ej. 4A81C20F" /></label
+          ><label
+            >Teléfono<input
+              id="lookupPhone"
+              type="tel"
+              autocomplete="tel"
+              required
+              placeholder="Teléfono del pedido" /></label
+          ><button class="primary" id="lookupOrderButton" type="submit">
+            Consultar pedido
+          </button>
+        </form>
+        <p
+          class="lookup-result"
+          id="orderLookupResult"
+          role="status"
+          aria-live="polite"
+        ></p>
+        <div class="lookup-order-details" id="lookupOrderDetails" hidden></div>
+        <div class="lookup-cancel-confirm" id="lookupCancelConfirm" hidden>
+          <p>
+            ¿Quieres cancelar este pedido? Las piezas volverán a estar
+            disponibles.
+          </p>
+          <button class="text-button" id="keepCustomerOrder" type="button">
+            Mantener pedido</button
+          ><button class="primary" id="confirmCustomerCancel" type="button">
+            Sí, cancelar pedido
+          </button>
+        </div>
+        <button
+          class="lookup-cancel-button"
+          id="cancelCustomerOrder"
+          type="button"
+          hidden
+        >
+          Cancelar pedido
+        </button>
+      </dialog>
+      <footer>Gracias por apoyar nuestro pequeño negocio <span>♥</span></footer>
+    </main>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="src/js/supabase-config.js"></script>
+    <script src="src/js/pedido-cliente.js"></script>
+  </body>
+</html>

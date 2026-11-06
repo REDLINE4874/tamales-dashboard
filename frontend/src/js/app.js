@@ -60,6 +60,8 @@ let STATE = {
   pendientes: [],
   completados: [],
   resumenSemanal: [],
+  cierresDiarios: [],
+  diasConInventario: [],
   inventario: [],
   semanaActual: "",
   semanaActualLabel: "",
@@ -175,6 +177,8 @@ function onDataLoaded(data) {
   STATE.pendientes = data.pendientes || [];
   STATE.completados = data.completados || [];
   STATE.resumenSemanal = data.resumenSemanal || [];
+  STATE.cierresDiarios = data.cierresDiarios || [];
+  STATE.diasConInventario = data.diasConInventario || [];
   STATE.inventario = data.inventario || [];
   STATE.semanaActual = data.semanaActual || "";
   STATE.semanaActualLabel = data.semanaActualLabel || "";
@@ -318,9 +322,8 @@ function actionFeedback(action) {
     completarPedido: ["Registrando el pago…", "Actualizando el estado y las ganancias.", "Pago registrado correctamente."],
     eliminarPedido: ["Cancelando pedido…", "Actualizando el inventario y guardando el aviso al cliente.", "Pedido cancelado; el aviso quedó disponible para el cliente."],
     guardarInventario: ["Guardando inventario…", "Actualizando las cantidades del día.", "Inventario del día guardado."],
+    guardarCierreDiario: ["Guardando cierre diario...", "Validando el inventario y registrando la inversi\u00f3n del d\u00eda.", "Cierre diario guardado."],
     cambiarEstadoPedidos: ["Actualizando pedidos…", "Cambiando si los clientes pueden enviar pedidos.", "Estado de pedidos actualizado."],
-    guardarInversion: ["Guardando inversión…", "Actualizando el cierre de la semana.", "Inversión guardada."],
-    cerrarSemana: ["Cerrando la semana…", "Guardando el cierre y preparando la siguiente semana.", "Semana cerrada correctamente."],
     guardarConfig: ["Guardando configuración…", "Actualizando los tipos y precios.", "Configuración guardada."],
   };
   return messages[action] || ["Guardando…", "Actualizando la información.", "Cambios guardados."];
