@@ -68,6 +68,9 @@ body{background:linear-gradient(135deg,#e9f1eb 0%,#eef4ef 52%,#e7efe9 100%)}
 .order-lookup-dialog::backdrop{background:#717c9b80;backdrop-filter:blur(5px)}
 .lookup-result.is-cancelled{background:#f1e5e8;color:var(--neo-red);box-shadow:inset 4px 4px 8px #d9c9cd,inset -4px -4px 8px #fff8fa}
 .lookup-result.is-error{color:var(--neo-red)}
+
+/* Quita el rectÃ¡ngulo de resaltado tÃ¡ctil nativo al pulsar los controles. */
+button,a,[role="button"]{-webkit-tap-highlight-color:transparent}
 .lookup-order-details{margin:14px 0;padding:14px;border-radius:14px;background:var(--neo-bg);box-shadow:inset 5px 5px 9px var(--neo-shadow),inset -5px -5px 9px var(--neo-light)}
 .lookup-detail-head,.lookup-detail-total,.lookup-order-details li{display:flex;align-items:center;justify-content:space-between;gap:10px}
 .lookup-detail-head{font-size:12px}.lookup-state{padding:4px 8px;border-radius:999px;font-size:10px;font-weight:750;background:#e0eee5;color:#245d42}.lookup-state.is-cancelled{background:#f1e5e8;color:var(--neo-red)}.lookup-state.is-complete{background:#e7ecef;color:#4f6473}
